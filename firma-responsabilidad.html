@@ -16,7 +16,7 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
 .info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #ddd}
 .info-row:last-child{border-bottom:none}
 .info-label{color:#5A7A96;font-size:14px}
-.info-value{color:#1A2B3C;font-weight:500;font-size:14px}
+.info-value{color:#1A2B3C;font-weight:500;font-size:14px;text-align:right}
 .signature-section{margin:24px 0}
 .signature-label{font-size:15px;font-weight:500;color:#1A2B3C;margin-bottom:12px}
 .signature-canvas{border:2px dashed #B0C8DC;border-radius:8px;background:white;width:100%;height:200px;cursor:crosshair;touch-action:none}
@@ -24,13 +24,15 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
 .btn-group{display:flex;gap:10px;margin-top:12px}
 .btn{padding:12px 24px;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:500;flex:1}
 .btn-clear{background:#f0f0f0;color:#666}
+.btn-clear:hover{background:#e0e0e0}
 .btn-submit{background:#00AEEF;color:white}
+.btn-submit:hover{background:#0090C7}
 .btn-submit:disabled{opacity:0.5;cursor:not-allowed}
 .alert{padding:12px 16px;border-radius:8px;margin:16px 0;font-size:13px}
 .alert-warning{background:#FFF8E6;border:1px solid #F5C842;color:#7A5200}
 .alert-error{background:#FEE;border:1px solid #F88;color:#C00}
 .alert-success{background:#E6F5EE;border:1px solid #0A7C4B;color:#0A7C4B}
-.loading{display:none;text-align:center;padding:20px}
+.loading{display:none;text-align:center;padding:20px;color:#5A7A96}
 .loading.active{display:block}
 .footer{background:#1A3A8F;padding:12px;text-align:center;color:rgba(255,255,255,0.5);font-size:11px}
 </style>
@@ -46,7 +48,7 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
   <div class="content">
     <!-- Estado de carga -->
     <div class="loading active" id="loadingInfo">
-      <p>Cargando información del equipo...</p>
+      <p>⏳ Cargando información del equipo...</p>
     </div>
 
     <!-- Información del equipo -->
@@ -77,15 +79,19 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
         </div>
         <div class="info-row" id="observationsRow" style="display:none">
           <span class="info-label">Observaciones:</span>
-          <span class="info-value" id="observations">...</span>
+          <span class="info-value" id="observations" style="text-align:left">...</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">ID Registro:</span>
+          <span class="info-value"><span id="recordID" style="font-family:monospace;font-size:12px">...</span></span>
         </div>
       </div>
 
       <!-- Sección de firma -->
       <div class="signature-section">
-        <div class="signature-label">Firma digital:</div>
+        <div class="signature-label">✍️ Firma digital:</div>
         <div class="alert alert-warning">
-          ✍️ Firma con tu dedo o mouse dentro del recuadro
+          <strong>Instrucciones:</strong> Firma con tu dedo (en celular) o mouse (en computadora) dentro del recuadro azul.
         </div>
         <canvas id="signatureCanvas" class="signature-canvas"></canvas>
         <div class="btn-group">
@@ -103,8 +109,8 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
     <!-- Mensaje de error -->
     <div id="errorMessage" style="display:none">
       <div class="alert alert-error">
-        <strong>⚠️ Error:</strong> No se pudo cargar la información. 
-        Verifica el enlace o contacta a TI.
+        <strong>⚠️ Error:</strong> <span id="errorText">No se pudo cargar la información.</span>
+        <p style="margin-top:8px;font-size:12px">Verifica el enlace o contacta al departamento de TI.</p>
       </div>
     </div>
 
@@ -112,7 +118,8 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
     <div id="successMessage" style="display:none">
       <div class="alert alert-success">
         <strong>✅ ¡Firma registrada exitosamente!</strong>
-        <p style="margin-top:8px">Gracias por confirmar la recepción del equipo. Se ha enviado una copia al técnico.</p>
+        <p style="margin-top:8px">Gracias por confirmar la recepción del equipo. Se ha enviado una confirmación al técnico.</p>
+        <p style="margin-top:12px;font-size:12px;color:#0A7C4B">Puedes cerrar esta ventana.</p>
       </div>
     </div>
   </div>
@@ -125,22 +132,27 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
 <script>
 // Variables globales
 let canvas, ctx, isDrawing = false, registroID;
+const POWER_AUTOMATE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/d3595a15a3fe43a683c64a393edf33c5/triggers/manual/paths/invoke?api-version=1';
 
 // Inicializar cuando carga la página
 window.onload = function() {
+  console.log('🚀 Página cargada');
+  
   // Obtener ID del registro desde la URL
   const urlParams = new URLSearchParams(window.location.search);
   registroID = urlParams.get('id');
   
+  console.log('📋 ID recibido:', registroID || 'ninguno');
+  
   if (!registroID) {
-    showError('No se proporcionó un ID de registro válido');
+    showError('No se proporcionó un ID de registro válido. Verifica el enlace.');
     return;
   }
-
+  
   // Configurar canvas de firma
   setupCanvas();
   
-  // Cargar datos del equipo (AQUÍ conectarás con Power Automate)
+  // Cargar datos del equipo desde Power Automate
   loadEquipmentData();
 };
 
@@ -156,6 +168,7 @@ function setupCanvas() {
   ctx.strokeStyle = '#1A3A8F';
   ctx.lineWidth = 2;
   ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
   
   // Eventos de mouse
   canvas.addEventListener('mousedown', startDrawing);
@@ -167,6 +180,8 @@ function setupCanvas() {
   canvas.addEventListener('touchstart', handleTouch);
   canvas.addEventListener('touchmove', handleTouch);
   canvas.addEventListener('touchend', stopDrawing);
+  
+  console.log('✏️ Canvas de firma configurado');
 }
 
 function startDrawing(e) {
@@ -203,6 +218,7 @@ function clearSignature() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   canvas.classList.remove('signed');
   document.getElementById('btnSubmit').disabled = true;
+  console.log('🗑️ Firma limpiada');
 }
 
 function enableSubmitButton() {
@@ -210,39 +226,49 @@ function enableSubmitButton() {
   document.getElementById('btnSubmit').disabled = false;
 }
 
-// Cargar datos del equipo desde Excel/SharePoint
+// Cargar datos del equipo desde Power Automate
 function loadEquipmentData() {
-  // AQUÍ ES DONDE CONECTAS CON POWER AUTOMATE
-  // Por ahora simulamos datos de prueba
+  console.log('📡 Consultando Power Automate...');
   
-  setTimeout(() => {
-    // Simula respuesta de Power Automate
-    const data = {
-      coordinatorName: 'Ana García',
-      equipment: 'Laptop Dell Latitude 5420',
-      serial: 'DLAT5420-2024-001',
-      location: '🇬🇹 Clínica Américas',
-      department: 'Recepción',
-      technician: 'Carlos Méndez',
-      observations: 'Incluye cargador y mouse'
-    };
-    
+  fetch(POWER_AUTOMATE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      id: registroID
+    })
+  })
+  .then(response => {
+    console.log('📥 Respuesta recibida:', response.status);
+    if (!response.ok) {
+      throw new Error('Error en la respuesta del servidor: ' + response.status);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('✅ Datos recibidos:', data);
     displayEquipmentData(data);
-  }, 1000);
+  })
+  .catch(error => {
+    console.error('❌ Error al cargar datos:', error);
+    showError('No se pudo conectar con el servidor. Por favor intenta de nuevo o contacta a TI.');
+  });
 }
 
 function displayEquipmentData(data) {
   document.getElementById('loadingInfo').classList.remove('active');
   document.getElementById('equipmentInfo').style.display = 'block';
   
-  document.getElementById('coordinatorName').textContent = data.coordinatorName;
-  document.getElementById('equipment').textContent = data.equipment;
-  document.getElementById('serial').textContent = data.serial;
-  document.getElementById('location').textContent = data.location;
-  document.getElementById('department').textContent = data.department;
-  document.getElementById('technician').textContent = data.technician;
+  document.getElementById('coordinatorName').textContent = data.coordinatorName || 'Coordinador';
+  document.getElementById('equipment').textContent = data.equipment || 'N/A';
+  document.getElementById('serial').textContent = data.serial || 'N/A';
+  document.getElementById('location').textContent = data.location || 'N/A';
+  document.getElementById('department').textContent = data.department || 'N/A';
+  document.getElementById('technician').textContent = data.technician || 'N/A';
+  document.getElementById('recordID').textContent = registroID;
   
-  if (data.observations) {
+  if (data.observations && data.observations.trim() !== '') {
     document.getElementById('observations').textContent = data.observations;
     document.getElementById('observationsRow').style.display = 'flex';
   }
@@ -251,23 +277,33 @@ function displayEquipmentData(data) {
 function showError(message) {
   document.getElementById('loadingInfo').classList.remove('active');
   document.getElementById('errorMessage').style.display = 'block';
+  document.getElementById('errorText').textContent = message;
+  console.error('❌', message);
 }
 
 function submitSignature() {
   const btn = document.getElementById('btnSubmit');
   btn.disabled = true;
-  btn.textContent = '⏳ Guardando...';
+  btn.textContent = '⏳ Guardando firma...';
+  
+  console.log('💾 Preparando firma para guardar...');
   
   // Convertir firma a imagen base64
   const signatureData = canvas.toDataURL('image/png');
   
-  // AQUÍ ENVÍAS LA FIRMA A POWER AUTOMATE
-  // Por ahora simulamos el guardado
+  console.log('📊 Tamaño de firma:', Math.round(signatureData.length / 1024), 'KB');
   
+  // POR AHORA: Mostrar mensaje de éxito temporal
+  // En el siguiente paso crearemos el flujo que guarde la firma
   setTimeout(() => {
     document.getElementById('equipmentInfo').style.display = 'none';
     document.getElementById('successMessage').style.display = 'block';
-  }, 2000);
+    console.log('✅ Firma capturada exitosamente');
+    console.log('📋 ID:', registroID);
+    console.log('🖼️ Firma (primeros 100 chars):', signatureData.substring(0, 100) + '...');
+  }, 1000);
+  
+  // NOTA: En el siguiente paso agregaremos aquí el código para enviar la firma a Power Automate
 }
 </script>
 
