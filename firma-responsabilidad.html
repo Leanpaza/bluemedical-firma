@@ -161,10 +161,7 @@ window.onload = function() {
     return;
   }
   
-  // Configurar canvas de firma
-  setupCanvas();
-  
-  // Cargar datos desde los parámetros de la URL
+  // Cargar datos desde los parámetros de la URL (el canvas se configura después)
   loadEquipmentDataFromURL(urlParams);
 };
 
@@ -276,6 +273,11 @@ function displayEquipmentData(data) {
     document.getElementById('observations').textContent = data.observations;
     document.getElementById('observationsRow').style.display = 'flex';
   }
+  
+  // Configurar canvas DESPUÉS de que sea visible
+  setTimeout(() => {
+    setupCanvas();
+  }, 100);
 }
 
 function showError(message) {
