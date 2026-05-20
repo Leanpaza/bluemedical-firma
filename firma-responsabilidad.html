@@ -16,7 +16,7 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
 .info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #ddd}
 .info-row:last-child{border-bottom:none}
 .info-label{color:#5A7A96;font-size:14px}
-.info-value{color:#1A2B3C;font-weight:500;font-size:14px;text-align:right}
+.info-value{color:#1A2B3C;font-weight:500;font-size:14px;text-align:right;max-width:60%;word-wrap:break-word}
 .signature-section{margin:24px 0}
 .signature-label{font-size:15px;font-weight:500;color:#1A2B3C;margin-bottom:12px}
 .signature-canvas{border:2px dashed #B0C8DC;border-radius:8px;background:white;width:100%;height:200px;cursor:crosshair;touch-action:none}
@@ -35,6 +35,9 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
 .loading{display:none;text-align:center;padding:20px;color:#5A7A96}
 .loading.active{display:block}
 .footer{background:#1A3A8F;padding:12px;text-align:center;color:rgba(255,255,255,0.5);font-size:11px}
+.confirmation-code{background:#E6F5EE;border:2px solid #0A7C4B;padding:20px;border-radius:8px;margin:20px 0;text-align:center}
+.confirmation-code h3{color:#0A7C4B;margin-bottom:10px}
+.code-display{background:white;padding:15px;border-radius:6px;font-size:24px;font-weight:bold;font-family:monospace;color:#1A3A8F;margin:10px 0;letter-spacing:2px}
 </style>
 </head>
 <body>
@@ -114,13 +117,23 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
       </div>
     </div>
 
-    <!-- Mensaje de éxito -->
+    <!-- Mensaje de éxito con código de confirmación -->
     <div id="successMessage" style="display:none">
       <div class="alert alert-success">
         <strong>✅ ¡Firma registrada exitosamente!</strong>
-        <p style="margin-top:8px">Gracias por confirmar la recepción del equipo. Se ha enviado una confirmación al técnico.</p>
-        <p style="margin-top:12px;font-size:12px;color:#0A7C4B">Puedes cerrar esta ventana.</p>
+        <p style="margin-top:8px">Gracias por confirmar la recepción del equipo.</p>
       </div>
+      
+      <div class="confirmation-code">
+        <h3>📋 Código de Confirmación</h3>
+        <div class="code-display" id="confirmationCode">...</div>
+        <p style="font-size:13px;color:#5A7A96;margin-top:10px">
+          Por favor reporta este código al técnico por WhatsApp, correo o directamente.<br>
+          Este código confirma que recibiste el equipo.
+        </p>
+      </div>
+      
+      <p style="margin-top:12px;font-size:12px;color:#0A7C4B;text-align:center">Puedes cerrar esta ventana.</p>
     </div>
   </div>
 
@@ -131,14 +144,13 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
 
 <script>
 // Variables globales
-let canvas, ctx, isDrawing = false, registroID;
-const POWER_AUTOMATE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/d3595a15a3fe43a683c64a393edf33c5/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=C32yLi42gk8ehZdbZEHiRN0HIwqSlRBEvIc4J9C7Was';
+let canvas, ctx, isDrawing = false, registroID, equipmentData;
 
 // Inicializar cuando carga la página
 window.onload = function() {
   console.log('🚀 Página cargada');
   
-  // Obtener ID del registro desde la URL
+  // Obtener parámetros de la URL
   const urlParams = new URLSearchParams(window.location.search);
   registroID = urlParams.get('id');
   
@@ -152,8 +164,8 @@ window.onload = function() {
   // Configurar canvas de firma
   setupCanvas();
   
-  // Cargar datos del equipo desde Power Automate
-  loadEquipmentData();
+  // Cargar datos desde los parámetros de la URL
+  loadEquipmentDataFromURL(urlParams);
 };
 
 // Configurar el canvas de firma
@@ -226,48 +238,38 @@ function enableSubmitButton() {
   document.getElementById('btnSubmit').disabled = false;
 }
 
-// Cargar datos del equipo desde Power Automate
-function loadEquipmentData() {
-  console.log('📡 Consultando Power Automate...');
+// Cargar datos desde los parámetros de la URL
+function loadEquipmentDataFromURL(urlParams) {
+  console.log('📡 Leyendo datos de la URL...');
   
-  // Construir URL con el ID como parámetro
-  const url = POWER_AUTOMATE_URL + '&id=' + encodeURIComponent(registroID);
+  equipmentData = {
+    coordinatorName: urlParams.get('nombre') || urlParams.get('coordinador') || 'Coordinador',
+    equipment: urlParams.get('equipo') || 'N/A',
+    serial: urlParams.get('serie') || 'N/A',
+    location: urlParams.get('sede') || urlParams.get('clinica') || 'N/A',
+    department: urlParams.get('departamento') || urlParams.get('dept') || 'N/A',
+    technician: urlParams.get('tecnico') || 'N/A',
+    observations: urlParams.get('observaciones') || urlParams.get('obs') || ''
+  };
   
-  console.log('🔗 URL completa:', url);
+  console.log('✅ Datos cargados:', equipmentData);
   
-  fetch(url, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-    }
-  })
-  .then(response => {
-    console.log('📥 Respuesta recibida:', response.status);
-    if (!response.ok) {
-      throw new Error('Error en la respuesta del servidor: ' + response.status);
-    }
-    return response.json();
-  })
-  .then(data => {
-    console.log('✅ Datos recibidos:', data);
-    displayEquipmentData(data);
-  })
-  .catch(error => {
-    console.error('❌ Error al cargar datos:', error);
-    showError('No se pudo conectar con el servidor. Por favor intenta de nuevo o contacta a TI.');
-  });
+  // Simular pequeña carga
+  setTimeout(() => {
+    displayEquipmentData(equipmentData);
+  }, 500);
 }
 
 function displayEquipmentData(data) {
   document.getElementById('loadingInfo').classList.remove('active');
   document.getElementById('equipmentInfo').style.display = 'block';
   
-  document.getElementById('coordinatorName').textContent = data.coordinatorName || 'Coordinador';
-  document.getElementById('equipment').textContent = data.equipment || 'N/A';
-  document.getElementById('serial').textContent = data.serial || 'N/A';
-  document.getElementById('location').textContent = data.location || 'N/A';
-  document.getElementById('department').textContent = data.department || 'N/A';
-  document.getElementById('technician').textContent = data.technician || 'N/A';
+  document.getElementById('coordinatorName').textContent = data.coordinatorName;
+  document.getElementById('equipment').textContent = data.equipment;
+  document.getElementById('serial').textContent = data.serial;
+  document.getElementById('location').textContent = data.location;
+  document.getElementById('department').textContent = data.department;
+  document.getElementById('technician').textContent = data.technician;
   document.getElementById('recordID').textContent = registroID;
   
   if (data.observations && data.observations.trim() !== '') {
@@ -288,24 +290,25 @@ function submitSignature() {
   btn.disabled = true;
   btn.textContent = '⏳ Guardando firma...';
   
-  console.log('💾 Preparando firma para guardar...');
+  console.log('💾 Procesando firma...');
   
   // Convertir firma a imagen base64
   const signatureData = canvas.toDataURL('image/png');
   
   console.log('📊 Tamaño de firma:', Math.round(signatureData.length / 1024), 'KB');
+  console.log('📋 ID:', registroID);
+  console.log('👤 Coordinador:', equipmentData.coordinatorName);
   
-  // POR AHORA: Mostrar mensaje de éxito temporal
-  // En el siguiente paso crearemos el flujo que guarde la firma
+  // Simular guardado y mostrar código de confirmación
   setTimeout(() => {
     document.getElementById('equipmentInfo').style.display = 'none';
     document.getElementById('successMessage').style.display = 'block';
+    document.getElementById('confirmationCode').textContent = registroID;
     console.log('✅ Firma capturada exitosamente');
-    console.log('📋 ID:', registroID);
-    console.log('🖼️ Firma (primeros 100 chars):', signatureData.substring(0, 100) + '...');
+    console.log('🔑 Código de confirmación:', registroID);
   }, 1000);
   
-  // NOTA: En el siguiente paso agregaremos aquí el código para enviar la firma a Power Automate
+  // NOTA: Aquí guardaríamos la firma en SharePoint/OneDrive si conectamos el flujo de guardado
 }
 </script>
 
