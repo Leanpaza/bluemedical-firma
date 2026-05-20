@@ -230,14 +230,16 @@ function enableSubmitButton() {
 function loadEquipmentData() {
   console.log('📡 Consultando Power Automate...');
   
-  fetch(POWER_AUTOMATE_URL, {
-    method: 'POST',
+  // Construir URL con el ID como parámetro
+  const url = POWER_AUTOMATE_URL + '&id=' + encodeURIComponent(registroID);
+  
+  console.log('🔗 URL completa:', url);
+  
+  fetch(url, {
+    method: 'GET',
     headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      id: registroID
-    })
+      'Accept': 'application/json',
+    }
   })
   .then(response => {
     console.log('📥 Respuesta recibida:', response.status);
