@@ -251,10 +251,66 @@ function loadEquipmentDataFromURL(urlParams) {
   
   console.log('✅ Datos cargados:', equipmentData);
   
-  // Simular pequeña carga
-  setTimeout(() => {
-    displayEquipmentData(equipmentData);
-  }, 500);
+  // Verificar si ya fue firmado antes de mostrar
+  verificarEstadoFirma();
+}
+
+// Verificar en Excel si ya fue firmado
+function verificarEstadoFirma() {
+  console.log('🔍 Verificando estado de la firma...');
+  
+  const VERIFY_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/d3595a15a3fe43a683c64a393edf33c5/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=C32yLi42gk8ehZdbZEHiRN0HIwqSlRBEvIc4J9C7Was';
+  
+  fetch(VERIFY_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      id: registroID
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('📥 Estado recibido:', data);
+    
+    // Verificar si ya está firmado
+    if (data.Estado === 'Firmado' || data.Estado === 'firmado') {
+      mostrarYaFirmado();
+    } else {
+      // Mostrar formulario de firma normalmente
+      setTimeout(() => {
+        displayEquipmentData(equipmentData);
+      }, 500);
+    }
+  })
+  .catch(error => {
+    console.error('❌ Error al verificar estado:', error);
+    // Si falla la verificación, mostrar la firma de todos modos
+    setTimeout(() => {
+      displayEquipmentData(equipmentData);
+    }, 500);
+  });
+}
+
+// Mostrar mensaje de que ya fue firmado
+function mostrarYaFirmado() {
+  document.getElementById('loadingInfo').classList.remove('active');
+  document.getElementById('errorMessage').style.display = 'block';
+  document.getElementById('errorText').textContent = 'Este equipo ya fue firmado anteriormente. No es posible firmar nuevamente.';
+  
+  // Agregar información adicional
+  const errorDiv = document.getElementById('errorMessage');
+  errorDiv.innerHTML += `
+    <div style="margin-top:16px;padding:12px;background:#E6F5EE;border-radius:6px">
+      <p style="margin:0;color:#0A7C4B;font-size:14px">
+        <strong>✅ Firma ya registrada</strong><br>
+        <span style="font-size:13px">ID: ${registroID}</span>
+      </p>
+    </div>
+  `;
+  
+  console.log('⚠️ Este documento ya fue firmado');
 }
 
 function displayEquipmentData(data) {
