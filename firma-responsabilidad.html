@@ -294,14 +294,128 @@ function submitSignature() {
   
   console.log('💾 Procesando firma...');
   
-  // Convertir firma a imagen base64
-  const signatureData = canvas.toDataURL('image/png');
+  // Crear un canvas para el documento completo con datos + firma
+  const fullCanvas = document.createElement('canvas');
+  fullCanvas.width = 800;
+  fullCanvas.height = 1000;
+  const fullCtx = fullCanvas.getContext('2d');
   
-  console.log('📊 Tamaño de firma:', Math.round(signatureData.length / 1024), 'KB');
+  // Fondo blanco
+  fullCtx.fillStyle = 'white';
+  fullCtx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
+  
+  // Header azul
+  fullCtx.fillStyle = '#1A3A8F';
+  fullCtx.fillRect(0, 0, fullCanvas.width, 100);
+  
+  // Título
+  fullCtx.fillStyle = 'white';
+  fullCtx.font = 'bold 32px Arial';
+  fullCtx.textAlign = 'center';
+  fullCtx.fillText('🏥 Bluemedical', fullCanvas.width / 2, 45);
+  fullCtx.font = '16px Arial';
+  fullCtx.fillText('Confirmación de Recepción de Equipo', fullCanvas.width / 2, 75);
+  
+  // Datos del equipo
+  let y = 150;
+  const leftMargin = 50;
+  const lineHeight = 35;
+  
+  fullCtx.fillStyle = '#1A2B3C';
+  fullCtx.font = 'bold 18px Arial';
+  fullCtx.textAlign = 'left';
+  
+  const data = [
+    ['ID Registro:', registroID],
+    ['Coordinador:', equipmentData.coordinatorName],
+    ['Equipo:', equipmentData.equipment],
+    ['N° de Serie:', equipmentData.serial],
+    ['Sede:', equipmentData.location],
+    ['Departamento:', equipmentData.department],
+    ['Entregado por:', equipmentData.technician],
+    ['Fecha:', new Date().toLocaleString('es-GT')]
+  ];
+  
+  if (equipmentData.observations && equipmentData.observations.trim() !== '') {
+    data.push(['Observaciones:', equipmentData.observations]);
+  }
+  
+  data.forEach(([label, value]) => {
+    fullCtx.fillStyle = '#5A7A96';
+    fullCtx.font = 'bold 16px Arial';
+    fullCtx.fillText(label, leftMargin, y);
+    
+    fullCtx.fillStyle = '#1A2B3C';
+    fullCtx.font = '16px Arial';
+    
+    // Wrap text si es muy largo
+    const maxWidth = 700;
+    const words = value.toString().split(' ');
+    let line = '';
+    let yOffset = 0;
+    
+    words.forEach((word, i) => {
+      const testLine = line + word + ' ';
+      const metrics = fullCtx.measureText(testLine);
+      
+      if (metrics.width > maxWidth && i > 0) {
+        fullCtx.fillText(line, leftMargin + 200, y + yOffset);
+        line = word + ' ';
+        yOffset += 20;
+      } else {
+        line = testLine;
+      }
+    });
+    fullCtx.fillText(line, leftMargin + 200, y + yOffset);
+    
+    y += lineHeight + yOffset;
+  });
+  
+  // Línea separadora
+  y += 20;
+  fullCtx.strokeStyle = '#00AEEF';
+  fullCtx.lineWidth = 2;
+  fullCtx.beginPath();
+  fullCtx.moveTo(50, y);
+  fullCtx.lineTo(750, y);
+  fullCtx.stroke();
+  
+  // Título de firma
+  y += 40;
+  fullCtx.fillStyle = '#1A2B3C';
+  fullCtx.font = 'bold 18px Arial';
+  fullCtx.fillText('✍️ Firma Digital:', leftMargin, y);
+  
+  // Copiar la firma del canvas original al canvas completo
+  y += 20;
+  const signatureScale = 0.9;
+  const signatureWidth = canvas.width * signatureScale;
+  const signatureHeight = canvas.height * signatureScale;
+  const signatureX = (fullCanvas.width - signatureWidth) / 2;
+  
+  // Dibujar borde alrededor de la firma
+  fullCtx.strokeStyle = '#00AEEF';
+  fullCtx.lineWidth = 2;
+  fullCtx.strokeRect(signatureX - 10, y - 10, signatureWidth + 20, signatureHeight + 20);
+  
+  fullCtx.drawImage(canvas, signatureX, y, signatureWidth, signatureHeight);
+  
+  // Footer
+  y += signatureHeight + 50;
+  fullCtx.fillStyle = '#888';
+  fullCtx.font = '12px Arial';
+  fullCtx.textAlign = 'center';
+  fullCtx.fillText('Documento generado electrónicamente el ' + new Date().toLocaleString('es-GT'), fullCanvas.width / 2, y);
+  fullCtx.fillText('Bluemedical · Sistema de Control de Equipos', fullCanvas.width / 2, y + 20);
+  
+  // Convertir el canvas completo a imagen
+  const fullImageData = fullCanvas.toDataURL('image/png');
+  
+  console.log('📊 Tamaño de documento completo:', Math.round(fullImageData.length / 1024), 'KB');
   console.log('📋 ID:', registroID);
   console.log('👤 Coordinador:', equipmentData.coordinatorName);
   
-  // Enviar firma a Power Automate
+  // Enviar a Power Automate
   const SAVE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/674446b50d634bd2bf24be0adacba48a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b9k0a8IgME2A22Yk-wXGg9HJyLXSNbFFXiUVpR1G9ak';
   
   fetch(SAVE_URL, {
@@ -311,7 +425,7 @@ function submitSignature() {
     },
     body: JSON.stringify({
       id: registroID,
-      signature: signatureData,
+      signature: fullImageData,
       timestamp: new Date().toISOString()
     })
   })
@@ -323,13 +437,13 @@ function submitSignature() {
     return response.json();
   })
   .then(result => {
-    console.log('✅ Firma guardada exitosamente:', result);
+    console.log('✅ Documento guardado exitosamente:', result);
     document.getElementById('equipmentInfo').style.display = 'none';
     document.getElementById('successMessage').style.display = 'block';
     document.getElementById('confirmationCode').textContent = registroID;
   })
   .catch(error => {
-    console.error('❌ Error al guardar firma:', error);
+    console.error('❌ Error al guardar:', error);
     btn.disabled = false;
     btn.textContent = '✅ Confirmar recepción';
     alert('Error al guardar la firma. Por favor intenta de nuevo o contacta a TI.\n\nError: ' + error.message);
