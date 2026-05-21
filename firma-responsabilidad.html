@@ -297,7 +297,7 @@ function submitSignature() {
   // Crear un canvas para el documento completo con datos + firma
   const fullCanvas = document.createElement('canvas');
   fullCanvas.width = 800;
-  fullCanvas.height = 1000;
+  fullCanvas.height = 1200;
   const fullCtx = fullCanvas.getContext('2d');
   
   // Fondo blanco
@@ -380,8 +380,31 @@ function submitSignature() {
   fullCtx.lineTo(750, y);
   fullCtx.stroke();
   
-  // Título de firma
+  // Leyenda de aceptación
   y += 40;
+  fullCtx.fillStyle = '#1A2B3C';
+  fullCtx.font = 'bold 16px Arial';
+  fullCtx.textAlign = 'left';
+  fullCtx.fillText('DECLARACIÓN DE ACEPTACIÓN:', leftMargin, y);
+  
+  y += 30;
+  fullCtx.fillStyle = '#1A2B3C';
+  fullCtx.font = '14px Arial';
+  
+  const declaracion = [
+    'Por medio de la presente, yo ' + equipmentData.coordinatorName + ', del departamento',
+    'de ' + equipmentData.department + ' en ' + equipmentData.location + ', DECLARO que he',
+    'recibido y me hago responsable del equipo descrito anteriormente. Me comprometo a',
+    'velar por su correcto uso y custodia.'
+  ];
+  
+  declaracion.forEach(line => {
+    fullCtx.fillText(line, leftMargin, y);
+    y += 22;
+  });
+  
+  // Título de firma
+  y += 20;
   fullCtx.fillStyle = '#1A2B3C';
   fullCtx.font = 'bold 18px Arial';
   fullCtx.fillText('✍️ Firma Digital:', leftMargin, y);
