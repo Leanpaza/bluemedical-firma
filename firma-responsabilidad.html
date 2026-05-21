@@ -301,16 +301,39 @@ function submitSignature() {
   console.log('📋 ID:', registroID);
   console.log('👤 Coordinador:', equipmentData.coordinatorName);
   
-  // Simular guardado y mostrar código de confirmación
-  setTimeout(() => {
+  // Enviar firma a Power Automate
+  const SAVE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/674446b50d634bd2bf24be0adacba48a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b9k0a8IgME2A22Yk-wXGg9HJyLXSNbFFXiUVpR1G9ak';
+  
+  fetch(SAVE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      id: registroID,
+      signature: signatureData,
+      timestamp: new Date().toISOString()
+    })
+  })
+  .then(response => {
+    console.log('📥 Respuesta del servidor:', response.status);
+    if (!response.ok) {
+      throw new Error('Error al guardar: ' + response.status);
+    }
+    return response.json();
+  })
+  .then(result => {
+    console.log('✅ Firma guardada exitosamente:', result);
     document.getElementById('equipmentInfo').style.display = 'none';
     document.getElementById('successMessage').style.display = 'block';
     document.getElementById('confirmationCode').textContent = registroID;
-    console.log('✅ Firma capturada exitosamente');
-    console.log('🔑 Código de confirmación:', registroID);
-  }, 1000);
-  
-  // NOTA: Aquí guardaríamos la firma en SharePoint/OneDrive si conectamos el flujo de guardado
+  })
+  .catch(error => {
+    console.error('❌ Error al guardar firma:', error);
+    btn.disabled = false;
+    btn.textContent = '✅ Confirmar recepción';
+    alert('Error al guardar la firma. Por favor intenta de nuevo o contacta a TI.\n\nError: ' + error.message);
+  });
 }
 </script>
 
