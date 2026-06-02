@@ -186,14 +186,31 @@ function setupCanvas() {
   canvas = document.getElementById('signatureCanvas');
   ctx = canvas.getContext('2d');
   
-  // Ajustar tamaño del canvas
-  canvas.width = canvas.offsetWidth;
-  canvas.height = 200;
+  // Alta resolución usando devicePixelRatio
+  const dpr = window.devicePixelRatio || 2;
+  const displayWidth = canvas.offsetWidth;
+  const displayHeight = 200;
+  
+  // Canvas interno a mayor resolución
+  canvas.width = displayWidth * dpr;
+  canvas.height = displayHeight * dpr;
+  
+  // Mantener tamaño visual igual
+  canvas.style.width = displayWidth + 'px';
+  canvas.style.height = displayHeight + 'px';
+  
+  // Escalar el contexto para dibujar en alta resolución
+  ctx.scale(dpr, dpr);
   
   ctx.strokeStyle = '#1A3A8F';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  
+  // Guardar el ratio para usarlo después
+  canvas.dpr = dpr;
   
   // Eventos de mouse
   canvas.addEventListener('mousedown', startDrawing);
@@ -206,7 +223,7 @@ function setupCanvas() {
   canvas.addEventListener('touchmove', handleTouch);
   canvas.addEventListener('touchend', stopDrawing);
   
-  console.log('✏️ Canvas de firma configurado');
+  console.log('✏️ Canvas de firma configurado (DPR:', dpr, ')');
 }
 
 function startDrawing(e) {
@@ -240,7 +257,8 @@ function handleTouch(e) {
 }
 
 function clearSignature() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const dpr = canvas.dpr || 1;
+  ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
   canvas.classList.remove('signed');
   document.getElementById('btnSubmit').disabled = true;
   console.log('🗑️ Firma limpiada');
@@ -525,11 +543,18 @@ function submitSignature() {
   fullCtx.textAlign = 'center';
   fullCtx.fillText('✍️ Firma Digital:', fullCanvas.width / 2, y);
   
-  // Copiar la firma del canvas original - MÁS ANCHA
+  // Copiar la firma del canvas original - MÁS ANCHA y ALTA CALIDAD
   y += 20;
   const signatureWidth = 550;
-  const signatureHeight = canvas.height * (550 / canvas.width);
+  const dpr = canvas.dpr || 1;
+  const displayW = canvas.width / dpr;
+  const displayH = canvas.height / dpr;
+  const signatureHeight = displayH * (signatureWidth / displayW);
   const signatureX = (fullCanvas.width - signatureWidth) / 2;
+  
+  // Activar suavizado para mejor calidad
+  fullCtx.imageSmoothingEnabled = true;
+  fullCtx.imageSmoothingQuality = 'high';
   
   // Dibujar borde alrededor de la firma (centrado)
   fullCtx.strokeStyle = '#00AEEF';
