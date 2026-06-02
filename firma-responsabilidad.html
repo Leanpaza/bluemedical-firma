@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Firma de Responsabilidad - Bluemedical</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
@@ -545,12 +546,25 @@ function submitSignature() {
   fullCtx.fillText('Documento generado electrónicamente el ' + new Date().toLocaleString('es-GT'), fullCanvas.width / 2, y);
   fullCtx.fillText('Bluemedical · Sistema de Control de Equipos', fullCanvas.width / 2, y + 20);
   
-  // Convertir el canvas completo a imagen
+  // Convertir el canvas a imagen PNG primero
   const fullImageData = fullCanvas.toDataURL('image/png');
   
-  console.log('📊 Tamaño de documento completo:', Math.round(fullImageData.length / 1024), 'KB');
+  // Crear PDF con jsPDF
+  const { jsPDF } = window.jspdf;
+  const pdfWidth = fullCanvas.width * 0.264583; // px a mm (72dpi aprox)
+  const pdfHeight = fullCanvas.height * 0.264583;
+  const pdf = new jsPDF({
+    orientation: pdfHeight > pdfWidth ? 'portrait' : 'landscape',
+    unit: 'mm',
+    format: [pdfWidth, pdfHeight]
+  });
+  
+  pdf.addImage(fullImageData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+  const pdfBase64 = pdf.output('datauristring');
+  
+  console.log('📊 Tamaño de PDF:', Math.round(pdfBase64.length / 1024), 'KB');
   console.log('📋 ID:', registroID);
-  console.log('👤 Coordinador:', equipmentData.coordinatorName);
+  console.log('👤 Usuario:', equipmentData.coordinatorName);
   
   // Enviar a Power Automate
   const SAVE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/674446b50d634bd2bf24be0adacba48a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b9k0a8IgME2A22Yk-wXGg9HJyLXSNbFFXiUVpR1G9ak';
@@ -562,7 +576,7 @@ function submitSignature() {
     },
     body: JSON.stringify({
       id: registroID,
-      signature: fullImageData,
+      signature: pdfBase64,
       timestamp: new Date().toISOString()
     })
   })
