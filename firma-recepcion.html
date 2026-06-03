@@ -186,8 +186,8 @@ function setupCanvas() {
   canvas = document.getElementById('signatureCanvas');
   ctx = canvas.getContext('2d');
   
-  // Alta resolución usando devicePixelRatio
-  const dpr = window.devicePixelRatio || 2;
+  // Alta resolución (máximo 2x para optimizar velocidad)
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const displayWidth = canvas.offsetWidth;
   const displayHeight = 200;
   
@@ -494,7 +494,16 @@ function submitSignature() {
   
   y += 5;
   
-  const sigData = canvas.toDataURL('image/png');
+  // Crear canvas temporal con fondo blanco para la firma
+  const sigCanvas = document.createElement('canvas');
+  sigCanvas.width = canvas.width;
+  sigCanvas.height = canvas.height;
+  const sigCtx = sigCanvas.getContext('2d');
+  sigCtx.fillStyle = 'white';
+  sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
+  sigCtx.drawImage(canvas, 0, 0);
+  
+  const sigData = sigCanvas.toDataURL('image/jpeg', 0.8);
   const sigWidth = 100;
   const sigHeight = (canvas.height / canvas.width) * sigWidth;
   const sigX = (pageWidth - sigWidth) / 2;
@@ -503,7 +512,7 @@ function submitSignature() {
   pdf.setLineWidth(0.5);
   pdf.rect(sigX - 3, y - 2, sigWidth + 6, sigHeight + 4);
   
-  pdf.addImage(sigData, 'PNG', sigX, y, sigWidth, sigHeight);
+  pdf.addImage(sigData, 'JPEG', sigX, y, sigWidth, sigHeight);
   
   y += sigHeight + 15;
   
