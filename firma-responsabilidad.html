@@ -384,68 +384,52 @@ function submitSignature() {
   
   console.log('💾 Procesando firma...');
   
-  // Crear un canvas para el documento completo con datos + firma
-  const fullCanvas = document.createElement('canvas');
-  fullCanvas.width = 800;
+  // Crear PDF con texto nativo (mucho más liviano)
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
   
-  // Calcular altura dinámica basada en el contenido
-  let estimatedHeight = 100; // header
-  estimatedHeight += 150; // margen superior + primeros campos
-  estimatedHeight += (8 * 35); // campos fijos
+  const pageWidth = 210;
+  const margin = 20;
+  const contentWidth = pageWidth - (margin * 2);
+  let y = 0;
   
-  // Estimar espacio extra para observaciones largas
-  if (equipmentData.observations && equipmentData.observations.trim() !== '') {
-    const obsLength = equipmentData.observations.length;
-    estimatedHeight += 35 + Math.ceil(obsLength / 45) * 20;
-  }
+  // ===== HEADER AZUL =====
+  pdf.setFillColor(26, 58, 143); // #1A3A8F
+  pdf.rect(0, 0, pageWidth, 30, 'F');
   
-  estimatedHeight += 60; // línea separadora + espacio
-  estimatedHeight += 40; // título declaración
-  estimatedHeight += 120; // texto declaración
-  estimatedHeight += 40; // título firma
-  estimatedHeight += 250; // firma + borde
-  estimatedHeight += 80; // footer
-  
-  fullCanvas.height = Math.max(1200, estimatedHeight);
-  const fullCtx = fullCanvas.getContext('2d');
-  
-  // Fondo blanco
-  fullCtx.fillStyle = 'white';
-  fullCtx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
-  
-  // Header azul
-  fullCtx.fillStyle = '#1A3A8F';
-  fullCtx.fillRect(0, 0, fullCanvas.width, 100);
-  
-  // Título con logo
-  fullCtx.fillStyle = 'white';
-  fullCtx.font = 'bold 32px Arial';
-  fullCtx.textAlign = 'center';
-  
-  // Dibujar logo + texto en el header
+  // Logo en el header
   if (logoLoaded) {
-    const logoW = 110;
-    const logoH = 31;
-    const textMeasure = fullCtx.measureText('Bluemedical');
-    const totalW = logoW + 12 + textMeasure.width;
-    const startX = (fullCanvas.width - totalW) / 2;
-    
-    fullCtx.drawImage(logoImage, startX, 23, logoW, logoH);
-    fullCtx.fillText('Bluemedical', startX + logoW + 12 + textMeasure.width / 2, 50);
+    try {
+      pdf.addImage(logoImage, 'PNG', pageWidth/2 - 40, 5, 22, 6);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Bluemedical', pageWidth/2 + 40, 13, { align: 'right' });
+    } catch(e) {
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Bluemedical', pageWidth/2, 13, { align: 'center' });
+    }
   } else {
-    fullCtx.fillText('Bluemedical', fullCanvas.width / 2, 45);
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(18);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Bluemedical', pageWidth/2, 13, { align: 'center' });
   }
-  fullCtx.font = '16px Arial';
-  fullCtx.fillText('Confirmación de Recepción de Equipo', fullCanvas.width / 2, 75);
   
-  // Datos del equipo
-  let y = 150;
-  const leftMargin = 50;
-  const lineHeight = 35;
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('Confirmación de Recepción de Equipo', pageWidth/2, 22, { align: 'center' });
   
-  fullCtx.fillStyle = '#1A2B3C';
-  fullCtx.font = 'bold 18px Arial';
-  fullCtx.textAlign = 'left';
+  // ===== DATOS DEL EQUIPO =====
+  y = 45;
+  const labelX = margin;
+  const valueX = margin + 45;
   
   const data = [
     ['ID Registro:', registroID],
@@ -463,128 +447,80 @@ function submitSignature() {
   }
   
   data.forEach(([label, value]) => {
-    fullCtx.fillStyle = '#5A7A96';
-    fullCtx.font = 'bold 16px Arial';
-    fullCtx.fillText(label, leftMargin, y);
+    // Etiqueta en azul oscuro
+    pdf.setTextColor(90, 122, 150); // #5A7A96
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(label, labelX, y);
     
-    fullCtx.fillStyle = '#1A2B3C';
-    fullCtx.font = '16px Arial';
+    // Valor en negro
+    pdf.setTextColor(26, 43, 60); // #1A2B3C
+    pdf.setFont('helvetica', 'normal');
     
-    // Wrap text para valores largos (como observaciones)
-    const valueX = leftMargin + 200;
-    const maxWidth = fullCanvas.width - valueX - 50;
-    const words = value.toString().split(' ');
-    let line = '';
-    let yOffset = 0;
+    // Text wrap para valores largos
+    const maxWidth = contentWidth - 45;
+    const lines = pdf.splitTextToSize(value.toString(), maxWidth);
+    pdf.text(lines, valueX, y);
     
-    words.forEach((word, i) => {
-      const testLine = line + word + ' ';
-      const metrics = fullCtx.measureText(testLine);
-      
-      if (metrics.width > maxWidth && i > 0) {
-        fullCtx.fillText(line.trim(), valueX, y + yOffset);
-        line = word + ' ';
-        yOffset += 20;
-      } else {
-        line = testLine;
-      }
-    });
-    fullCtx.fillText(line.trim(), valueX, y + yOffset);
-    
-    y += lineHeight + yOffset;
+    y += 7 * lines.length;
   });
   
-  // Línea separadora
-  y += 20;
-  fullCtx.strokeStyle = '#00AEEF';
-  fullCtx.lineWidth = 2;
-  fullCtx.beginPath();
-  fullCtx.moveTo(50, y);
-  fullCtx.lineTo(750, y);
-  fullCtx.stroke();
+  // ===== LÍNEA SEPARADORA =====
+  y += 5;
+  pdf.setDrawColor(0, 174, 239); // #00AEEF
+  pdf.setLineWidth(0.5);
+  pdf.line(margin, y, pageWidth - margin, y);
   
-  // Leyenda de aceptación (CENTRADA)
-  y += 40;
-  fullCtx.fillStyle = '#1A2B3C';
-  fullCtx.font = 'bold 16px Arial';
-  fullCtx.textAlign = 'center';
-  fullCtx.fillText('DECLARACIÓN DE ACEPTACIÓN:', fullCanvas.width / 2, y);
+  // ===== DECLARACIÓN DE ACEPTACIÓN =====
+  y += 12;
+  pdf.setTextColor(26, 43, 60);
+  pdf.setFontSize(11);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('DECLARACIÓN DE ACEPTACIÓN:', pageWidth/2, y, { align: 'center' });
   
-  y += 30;
-  fullCtx.fillStyle = '#1A2B3C';
-  fullCtx.font = '14px Arial';
-  fullCtx.textAlign = 'center';
+  y += 10;
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'normal');
   
   const declaracionTexto = 'Por medio de la presente, yo ' + equipmentData.coordinatorName + ', del departamento de ' + equipmentData.department + ' en ' + equipmentData.location + ', DECLARO que he recibido y me hago responsable del equipo descrito anteriormente. Me comprometo a velar por su correcto uso y custodia.';
   
-  // Wrap del texto de declaración centrado
-  const decWords = declaracionTexto.split(' ');
-  let decLine = '';
-  const decMaxWidth = 620;
+  const decLines = pdf.splitTextToSize(declaracionTexto, contentWidth - 20);
+  pdf.text(decLines, pageWidth/2, y, { align: 'center' });
+  y += 6 * decLines.length;
   
-  decWords.forEach((word, i) => {
-    const testLine = decLine + word + ' ';
-    const metrics = fullCtx.measureText(testLine);
-    
-    if (metrics.width > decMaxWidth && i > 0) {
-      fullCtx.fillText(decLine.trim(), fullCanvas.width / 2, y);
-      decLine = word + ' ';
-      y += 22;
-    } else {
-      decLine = testLine;
-    }
-  });
-  fullCtx.fillText(decLine.trim(), fullCanvas.width / 2, y);
+  // ===== FIRMA DIGITAL =====
+  y += 10;
+  pdf.setFontSize(12);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(26, 43, 60);
+  pdf.text('Firma Digital:', pageWidth/2, y, { align: 'center' });
   
-  // Título de firma (centrado)
-  y += 40;
-  fullCtx.fillStyle = '#1A2B3C';
-  fullCtx.font = 'bold 18px Arial';
-  fullCtx.textAlign = 'center';
-  fullCtx.fillText('✍️ Firma Digital:', fullCanvas.width / 2, y);
+  y += 5;
   
-  // Copiar la firma del canvas original - MÁS ANCHA y ALTA CALIDAD
-  y += 20;
-  const signatureWidth = 550;
-  const dpr = canvas.dpr || 1;
-  const displayW = canvas.width / dpr;
-  const displayH = canvas.height / dpr;
-  const signatureHeight = displayH * (signatureWidth / displayW);
-  const signatureX = (fullCanvas.width - signatureWidth) / 2;
+  // Extraer solo la firma del canvas como imagen
+  const sigData = canvas.toDataURL('image/png');
+  const sigWidth = 100;
+  const sigHeight = (canvas.height / canvas.width) * sigWidth;
+  const sigX = (pageWidth - sigWidth) / 2;
   
-  // Activar suavizado para mejor calidad
-  fullCtx.imageSmoothingEnabled = true;
-  fullCtx.imageSmoothingQuality = 'high';
+  // Borde azul alrededor de la firma
+  pdf.setDrawColor(0, 174, 239);
+  pdf.setLineWidth(0.5);
+  pdf.rect(sigX - 3, y - 2, sigWidth + 6, sigHeight + 4);
   
-  // Dibujar borde alrededor de la firma (centrado)
-  fullCtx.strokeStyle = '#00AEEF';
-  fullCtx.lineWidth = 2;
-  fullCtx.strokeRect(signatureX - 10, y - 10, signatureWidth + 20, signatureHeight + 20);
+  // Dibujar la firma
+  pdf.addImage(sigData, 'PNG', sigX, y, sigWidth, sigHeight);
   
-  fullCtx.drawImage(canvas, signatureX, y, signatureWidth, signatureHeight);
+  y += sigHeight + 15;
   
-  // Footer
-  y += signatureHeight + 50;
-  fullCtx.fillStyle = '#888';
-  fullCtx.font = '12px Arial';
-  fullCtx.textAlign = 'center';
-  fullCtx.fillText('Documento generado electrónicamente el ' + new Date().toLocaleString('es-GT'), fullCanvas.width / 2, y);
-  fullCtx.fillText('Bluemedical · Sistema de Control de Equipos', fullCanvas.width / 2, y + 20);
+  // ===== FOOTER =====
+  pdf.setTextColor(136, 136, 136);
+  pdf.setFontSize(8);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('Documento generado electrónicamente el ' + new Date().toLocaleString('es-GT'), pageWidth/2, y, { align: 'center' });
+  pdf.text('Bluemedical · Sistema de Control de Equipos', pageWidth/2, y + 5, { align: 'center' });
   
-  // Convertir el canvas a imagen PNG primero
-  const fullImageData = fullCanvas.toDataURL('image/png');
-  
-  // Crear PDF con jsPDF
-  const { jsPDF } = window.jspdf;
-  const pdfWidth = fullCanvas.width * 0.264583; // px a mm (72dpi aprox)
-  const pdfHeight = fullCanvas.height * 0.264583;
-  const pdf = new jsPDF({
-    orientation: pdfHeight > pdfWidth ? 'portrait' : 'landscape',
-    unit: 'mm',
-    format: [pdfWidth, pdfHeight]
-  });
-  
-  pdf.addImage(fullImageData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+  // ===== GENERAR Y ENVIAR =====
   const pdfBase64 = pdf.output('datauristring');
   
   console.log('📊 Tamaño de PDF:', Math.round(pdfBase64.length / 1024), 'KB');
