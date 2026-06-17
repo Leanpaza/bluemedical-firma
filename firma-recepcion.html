@@ -378,115 +378,96 @@ function showError(message) {
 }
 
 function submitSignature() {
-  const btn = document.getElementById('btnSubmit');
+  var btn = document.getElementById('btnSubmit');
   btn.disabled = true;
   btn.textContent = '⏳ Guardando firma...';
-  console.log('💾 Procesando firma...');
   
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const pw = 210, mg = 20, cw = pw - mg*2;
-  let y = 0;
+  var jsPDFLib = window.jspdf.jsPDF;
+  var pdf = new jsPDFLib({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  var pw = 210, mg = 20, cw = pw - mg*2;
+  var y = 0;
   
   // Header azul
   pdf.setFillColor(26, 58, 143);
   pdf.rect(0, 0, pw, 30, 'F');
-  if (logoLoaded) {
-    try { pdf.addImage(logoImage, 'PNG', pw/2-40, 5, 22, 6); } catch(e) {}
-  }
+  if (logoLoaded) { try { pdf.addImage(logoImage, 'PNG', pw/2-40, 5, 22, 6); } catch(e) {} }
   pdf.setTextColor(255,255,255); pdf.setFontSize(18); pdf.setFont('helvetica','bold');
   pdf.text('Bluemedical', pw/2+15, 13, {align:'center'});
   pdf.setFontSize(10); pdf.setFont('helvetica','normal');
   pdf.text('Confirmación de Devolución de Equipo', pw/2, 22, {align:'center'});
   
+  // Datos
   y = 45;
-  const fields = [
-    ['ID Registro:', registroID],
-    ['Usuario:', equipmentData.coordinatorName],
-    ['Equipo:', equipmentData.equipment],
-    ['N° de Serie:', equipmentData.serial],
-    ['Sede:', equipmentData.location],
-    ['Departamento:', equipmentData.department],
-    ['Recibido por:', equipmentData.technician],
+  var fields = [
+    ['ID Registro:', registroID || ''],
+    ['Usuario:', equipmentData.coordinatorName || ''],
+    ['Equipo:', equipmentData.equipment || ''],
+    ['N° de Serie:', equipmentData.serial || ''],
+    ['Sede:', equipmentData.location || ''],
+    ['Departamento:', equipmentData.department || ''],
+    ['Recibido por:', equipmentData.technician || ''],
     ['Fecha:', new Date().toLocaleString('es-GT')]
   ];
   if (equipmentData.observations && equipmentData.observations.trim() !== '') {
     fields.push(['Observaciones:', equipmentData.observations]);
   }
-  fields.forEach(([label, value]) => {
+  for (var i = 0; i < fields.length; i++) {
+    var label = fields[i][0], value = fields[i][1];
     pdf.setTextColor(90,122,150); pdf.setFontSize(10); pdf.setFont('helvetica','bold');
     pdf.text(label, mg, y);
     pdf.setTextColor(26,43,60); pdf.setFont('helvetica','normal');
-    const lines = pdf.splitTextToSize(value.toString(), cw - 45);
+    var lines = pdf.splitTextToSize(String(value), cw - 45);
     pdf.text(lines, mg + 45, y);
     y += 7 * lines.length;
-  });
+  }
   
+  // Línea
   y += 5;
   pdf.setDrawColor(0,174,239); pdf.setLineWidth(0.5);
   pdf.line(mg, y, pw-mg, y);
   
+  // Declaración
   y += 12;
   pdf.setTextColor(26,43,60); pdf.setFontSize(11); pdf.setFont('helvetica','bold');
   pdf.text('DECLARACIÓN DE DEVOLUCIÓN:', pw/2, y, {align:'center'});
   y += 10;
   pdf.setFontSize(9); pdf.setFont('helvetica','normal');
-  const decTxt = 'Por medio de la presente, yo ' + equipmentData.coordinatorName + ', del departamento de ' + equipmentData.department + ' en ' + equipmentData.location + ', DECLARO que he devuelto el equipo descrito anteriormente al departamento de TI de Bluemedical.';
-  const decLines = pdf.splitTextToSize(decTxt, cw - 20);
+  var decTxt = 'Por medio de la presente, yo ' + (equipmentData.coordinatorName||'') + ', del departamento de ' + (equipmentData.department||'') + ' en ' + (equipmentData.location||'') + ', DECLARO que he devuelto el equipo descrito anteriormente al departamento de TI de Bluemedical.';
+  var decLines = pdf.splitTextToSize(decTxt, cw - 20);
   pdf.text(decLines, pw/2, y, {align:'center'});
   y += 6 * decLines.length;
   
+  // Firma como JPEG
   y += 10;
   pdf.setFontSize(12); pdf.setFont('helvetica','bold');
   pdf.text('Firma Digital:', pw/2, y, {align:'center'});
   y += 5;
-  
-  const sigCanvas = document.createElement('canvas');
-  sigCanvas.width = canvas.width; sigCanvas.height = canvas.height;
-  const sigCtx = sigCanvas.getContext('2d');
-  sigCtx.fillStyle = 'white';
-  sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
-  sigCtx.drawImage(canvas, 0, 0);
-  const sigData = sigCanvas.toDataURL('image/jpeg', 0.85);
-  
-  const sigW = 100, sigH = (canvas.height/canvas.width)*sigW;
-  const sigX = (pw - sigW) / 2;
+  var sc = document.createElement('canvas');
+  sc.width = canvas.width; sc.height = canvas.height;
+  var sx = sc.getContext('2d');
+  sx.fillStyle = 'white'; sx.fillRect(0, 0, sc.width, sc.height);
+  sx.drawImage(canvas, 0, 0);
+  var sd = sc.toDataURL('image/jpeg', 0.85);
+  var sw = 100, sh = (canvas.height/canvas.width)*sw, sxx = (pw-sw)/2;
   pdf.setDrawColor(0,174,239); pdf.setLineWidth(0.5);
-  pdf.rect(sigX-3, y-2, sigW+6, sigH+4);
-  pdf.addImage(sigData, 'JPEG', sigX, y, sigW, sigH);
-  y += sigH + 15;
+  pdf.rect(sxx-3, y-2, sw+6, sh+4);
+  pdf.addImage(sd, 'JPEG', sxx, y, sw, sh);
+  y += sh + 15;
   
+  // Footer
   pdf.setTextColor(136,136,136); pdf.setFontSize(8); pdf.setFont('helvetica','normal');
-  pdf.text('Documento generado electrónicamente el ' + new Date().toLocaleString('es-GT'), pw/2, y, {align:'center'});
+  pdf.text('Documento generado el ' + new Date().toLocaleString('es-GT'), pw/2, y, {align:'center'});
   pdf.text('Bluemedical - Sistema de Control de Equipos', pw/2, y+5, {align:'center'});
   
-  const arrBuf = pdf.output('arraybuffer');
-  const bytes = new Uint8Array(arrBuf);
-  let bin = '';
-  const chunkSize = 8192;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
-  }
-  const imageData = 'data:application/pdf;base64,' + btoa(bin);
-  console.log('📊 Tamaño PDF:', Math.round(imageData.length / 1024), 'KB');
+  // Limpiar data URI
+  var imageData = pdf.output('datauristring').replace('filename=generated.pdf;', '');
   
-  const SAVE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/cccd5c9e1cac46f98b16ca7caf60c7cb/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=O5baIspGq02fHbccpzucg2CErtUTtk3D8gK89f-8Njw';
+  var SAVE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/cccd5c9e1cac46f98b16ca7caf60c7cb/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=O5baIspGq02fHbccpzucg2CErtUTtk3D8gK89f-8Njw';
   
-  fetch(SAVE_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: registroID, signature: imageData, timestamp: new Date().toISOString() })
-  })
-  .then(r => { if (!r.ok) throw new Error('Error: ' + r.status); return r.json(); })
-  .then(result => {
-    document.getElementById('equipmentInfo').style.display = 'none';
-    document.getElementById('successMessage').style.display = 'block';
-    document.getElementById('confirmationCode').textContent = registroID;
-  })
-  .catch(error => {
-    btn.disabled = false; btn.textContent = '✅ Confirmar devolución';
-    alert('Error al guardar. Intenta de nuevo.\nError: ' + error.message);
-  });
+  fetch(SAVE_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id:registroID,signature:imageData,timestamp:new Date().toISOString()}) })
+  .then(function(r){if(!r.ok)throw new Error('Error: '+r.status);return r.json()})
+  .then(function(){document.getElementById('equipmentInfo').style.display='none';document.getElementById('successMessage').style.display='block';document.getElementById('confirmationCode').textContent=registroID})
+  .catch(function(e){btn.disabled=false;btn.textContent='✅ Confirmar devolución';alert('Error al guardar.\n'+e.message)});
 }
 </script>
 
