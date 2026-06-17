@@ -524,7 +524,8 @@ function submitSignature() {
   pdf.text('Bluemedical \u00B7 Sistema de Control de Equipos', pageWidth/2, y + 5, { align: 'center' });
   
   // ===== GENERAR Y ENVIAR =====
-  const pdfBase64 = pdf.output('datauristring');
+  const pdfBase64Raw = pdf.output('base64');
+  const pdfBase64 = 'data:application/pdf;base64,' + pdfBase64Raw;
   
   console.log('📊 Tamaño de PDF:', Math.round(pdfBase64.length / 1024), 'KB');
   console.log('📋 ID:', registroID);
