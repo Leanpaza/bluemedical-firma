@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Firma de Responsabilidad - Bluemedical</title>
+<title>Firma de Devolución - Bluemedical</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -46,7 +46,7 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
 <div class="container">
   <div class="header">
     <h1>Bluemedical</h1>
-    <p>Confirmación de Recepción de Equipo</p>
+    <p>Confirmación de Devolución de Equipo</p>
   </div>
 
   <div class="content">
@@ -58,7 +58,7 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
     <!-- Información del equipo -->
     <div id="equipmentInfo" style="display:none">
       <p style="margin-bottom:16px">Estimado(a) <strong id="coordinatorName">...</strong>,</p>
-      <p style="margin-bottom:16px">Por favor confirma la recepción del siguiente equipo:</p>
+      <p style="margin-bottom:16px">Por favor confirma la devolución del siguiente equipo:</p>
 
       <div class="info-box">
         <div class="info-row">
@@ -101,7 +101,7 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
         <div class="btn-group">
           <button class="btn btn-clear" onclick="clearSignature()">🗑️ Limpiar</button>
           <button class="btn btn-submit" id="btnSubmit" onclick="submitSignature()" disabled>
-            ✅ Confirmar recepción
+            ✅ Confirmar devolución
           </button>
         </div>
       </div>
@@ -122,7 +122,7 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
     <div id="successMessage" style="display:none">
       <div class="alert alert-success">
         <strong>✅ ¡Firma registrada exitosamente!</strong>
-        <p style="margin-top:8px">Gracias por confirmar la recepción del equipo.</p>
+        <p style="margin-top:8px">Gracias por confirmar la devolución del equipo.</p>
       </div>
       
       <div class="confirmation-code">
@@ -293,7 +293,7 @@ function loadEquipmentDataFromURL(urlParams) {
 function verificarEstadoFirma() {
   console.log('🔍 Verificando estado de la firma...');
   
-  const VERIFY_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/d3595a15a3fe43a683c64a393edf33c5/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=C32yLi42gk8ehZdbZEHiRN0HIwqSlRBEvIc4J9C7Was';
+  const VERIFY_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2ec3179a74b046cc89f8bd759135caf3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=LwTXffNw9kBcS3tn1_wLErFA58Syzon9sZUh6Q0M1nw';
   
   fetch(VERIFY_URL, {
     method: 'POST',
@@ -397,9 +397,8 @@ function submitSignature() {
   pdf.setTextColor(255,255,255); pdf.setFontSize(18); pdf.setFont('helvetica','bold');
   pdf.text('Bluemedical', pw/2+15, 13, {align:'center'});
   pdf.setFontSize(10); pdf.setFont('helvetica','normal');
-  pdf.text('Confirmación de Recepción de Equipo', pw/2, 22, {align:'center'});
+  pdf.text('Confirmación de Devolución de Equipo', pw/2, 22, {align:'center'});
   
-  // Datos del equipo
   y = 45;
   const fields = [
     ['ID Registro:', registroID],
@@ -408,7 +407,7 @@ function submitSignature() {
     ['N° de Serie:', equipmentData.serial],
     ['Sede:', equipmentData.location],
     ['Departamento:', equipmentData.department],
-    ['Entregado por:', equipmentData.technician],
+    ['Recibido por:', equipmentData.technician],
     ['Fecha:', new Date().toLocaleString('es-GT')]
   ];
   if (equipmentData.observations && equipmentData.observations.trim() !== '') {
@@ -423,29 +422,25 @@ function submitSignature() {
     y += 7 * lines.length;
   });
   
-  // Línea separadora
   y += 5;
   pdf.setDrawColor(0,174,239); pdf.setLineWidth(0.5);
   pdf.line(mg, y, pw-mg, y);
   
-  // Declaración
   y += 12;
   pdf.setTextColor(26,43,60); pdf.setFontSize(11); pdf.setFont('helvetica','bold');
-  pdf.text('DECLARACIÓN DE ACEPTACIÓN:', pw/2, y, {align:'center'});
+  pdf.text('DECLARACIÓN DE DEVOLUCIÓN:', pw/2, y, {align:'center'});
   y += 10;
   pdf.setFontSize(9); pdf.setFont('helvetica','normal');
-  const decTxt = 'Por medio de la presente, yo ' + equipmentData.coordinatorName + ', del departamento de ' + equipmentData.department + ' en ' + equipmentData.location + ', DECLARO que he recibido y me hago responsable del equipo descrito anteriormente. Me comprometo a velar por su correcto uso y custodia.';
+  const decTxt = 'Por medio de la presente, yo ' + equipmentData.coordinatorName + ', del departamento de ' + equipmentData.department + ' en ' + equipmentData.location + ', DECLARO que he devuelto el equipo descrito anteriormente al departamento de TI de Bluemedical.';
   const decLines = pdf.splitTextToSize(decTxt, cw - 20);
   pdf.text(decLines, pw/2, y, {align:'center'});
   y += 6 * decLines.length;
   
-  // Firma
   y += 10;
   pdf.setFontSize(12); pdf.setFont('helvetica','bold');
   pdf.text('Firma Digital:', pw/2, y, {align:'center'});
   y += 5;
   
-  // Fondo blanco para firma JPEG
   const sigCanvas = document.createElement('canvas');
   sigCanvas.width = canvas.width; sigCanvas.height = canvas.height;
   const sigCtx = sigCanvas.getContext('2d');
@@ -461,12 +456,10 @@ function submitSignature() {
   pdf.addImage(sigData, 'JPEG', sigX, y, sigW, sigH);
   y += sigH + 15;
   
-  // Footer
   pdf.setTextColor(136,136,136); pdf.setFontSize(8); pdf.setFont('helvetica','normal');
   pdf.text('Documento generado electrónicamente el ' + new Date().toLocaleString('es-GT'), pw/2, y, {align:'center'});
   pdf.text('Bluemedical - Sistema de Control de Equipos', pw/2, y+5, {align:'center'});
   
-  // Convertir PDF a base64 limpio via arraybuffer
   const arrBuf = pdf.output('arraybuffer');
   const bytes = new Uint8Array(arrBuf);
   let bin = '';
@@ -477,7 +470,7 @@ function submitSignature() {
   const imageData = 'data:application/pdf;base64,' + btoa(bin);
   console.log('📊 Tamaño PDF:', Math.round(imageData.length / 1024), 'KB');
   
-  const SAVE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/674446b50d634bd2bf24be0adacba48a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b9k0a8IgME2A22Yk-wXGg9HJyLXSNbFFXiUVpR1G9ak';
+  const SAVE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/cccd5c9e1cac46f98b16ca7caf60c7cb/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=O5baIspGq02fHbccpzucg2CErtUTtk3D8gK89f-8Njw';
   
   fetch(SAVE_URL, {
     method: 'POST',
@@ -491,7 +484,7 @@ function submitSignature() {
     document.getElementById('confirmationCode').textContent = registroID;
   })
   .catch(error => {
-    btn.disabled = false; btn.textContent = '✅ Confirmar recepción';
+    btn.disabled = false; btn.textContent = '✅ Confirmar devolución';
     alert('Error al guardar. Intenta de nuevo.\nError: ' + error.message);
   });
 }
