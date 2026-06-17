@@ -378,195 +378,96 @@ function showError(message) {
 }
 
 function submitSignature() {
-  const btn = document.getElementById('btnSubmit');
+  var btn = document.getElementById('btnSubmit');
   btn.disabled = true;
   btn.textContent = '⏳ Guardando firma...';
   
-  console.log('💾 Procesando firma...');
+  var jsPDFLib = window.jspdf.jsPDF;
+  var pdf = new jsPDFLib({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  var pw = 210, mg = 20, cw = pw - mg*2;
+  var y = 0;
   
-  // Crear PDF con texto nativo (mucho más liviano)
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
-  });
+  // Header azul
+  pdf.setFillColor(26, 58, 143);
+  pdf.rect(0, 0, pw, 30, 'F');
+  if (logoLoaded) { try { pdf.addImage(logoImage, 'PNG', pw/2-40, 5, 22, 6); } catch(e) {} }
+  pdf.setTextColor(255,255,255); pdf.setFontSize(18); pdf.setFont('helvetica','bold');
+  pdf.text('Bluemedical', pw/2+15, 13, {align:'center'});
+  pdf.setFontSize(10); pdf.setFont('helvetica','normal');
+  pdf.text('Confirmación de Recepción de Equipo', pw/2, 22, {align:'center'});
   
-  const pageWidth = 210;
-  const margin = 20;
-  const contentWidth = pageWidth - (margin * 2);
-  let y = 0;
-  
-  // ===== HEADER AZUL =====
-  pdf.setFillColor(26, 58, 143); // #1A3A8F
-  pdf.rect(0, 0, pageWidth, 30, 'F');
-  
-  // Logo en el header
-  if (logoLoaded) {
-    try {
-      pdf.addImage(logoImage, 'PNG', pageWidth/2 - 40, 5, 22, 6);
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Bluemedical', pageWidth/2 + 40, 13, { align: 'right' });
-    } catch(e) {
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Bluemedical', pageWidth/2, 13, { align: 'center' });
-    }
-  } else {
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(18);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Bluemedical', pageWidth/2, 13, { align: 'center' });
-  }
-  
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text('Confirmación de Recepción de Equipo', pageWidth/2, 22, { align: 'center' });
-  
-  // ===== DATOS DEL EQUIPO =====
+  // Datos
   y = 45;
-  const labelX = margin;
-  const valueX = margin + 45;
-  
-  const data = [
-    ['ID Registro:', registroID],
-    ['Usuario:', equipmentData.coordinatorName],
-    ['Equipo:', equipmentData.equipment],
-    ['N° de Serie:', equipmentData.serial],
-    ['Sede:', equipmentData.location],
-    ['Departamento:', equipmentData.department],
-    ['Entregado por:', equipmentData.technician],
+  var fields = [
+    ['ID Registro:', registroID || ''],
+    ['Usuario:', equipmentData.coordinatorName || ''],
+    ['Equipo:', equipmentData.equipment || ''],
+    ['N° de Serie:', equipmentData.serial || ''],
+    ['Sede:', equipmentData.location || ''],
+    ['Departamento:', equipmentData.department || ''],
+    ['Entregado por:', equipmentData.technician || ''],
     ['Fecha:', new Date().toLocaleString('es-GT')]
   ];
-  
   if (equipmentData.observations && equipmentData.observations.trim() !== '') {
-    data.push(['Observaciones:', equipmentData.observations]);
+    fields.push(['Observaciones:', equipmentData.observations]);
+  }
+  for (var i = 0; i < fields.length; i++) {
+    var label = fields[i][0], value = fields[i][1];
+    pdf.setTextColor(90,122,150); pdf.setFontSize(10); pdf.setFont('helvetica','bold');
+    pdf.text(label, mg, y);
+    pdf.setTextColor(26,43,60); pdf.setFont('helvetica','normal');
+    var lines = pdf.splitTextToSize(String(value), cw - 45);
+    pdf.text(lines, mg + 45, y);
+    y += 7 * lines.length;
   }
   
-  data.forEach(([label, value]) => {
-    // Etiqueta en azul oscuro
-    pdf.setTextColor(90, 122, 150); // #5A7A96
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(label, labelX, y);
-    
-    // Valor en negro
-    pdf.setTextColor(26, 43, 60); // #1A2B3C
-    pdf.setFont('helvetica', 'normal');
-    
-    // Text wrap para valores largos
-    const maxWidth = contentWidth - 45;
-    const lines = pdf.splitTextToSize(value.toString(), maxWidth);
-    pdf.text(lines, valueX, y);
-    
-    y += 7 * lines.length;
-  });
-  
-  // ===== LÍNEA SEPARADORA =====
+  // Línea
   y += 5;
-  pdf.setDrawColor(0, 174, 239); // #00AEEF
-  pdf.setLineWidth(0.5);
-  pdf.line(margin, y, pageWidth - margin, y);
+  pdf.setDrawColor(0,174,239); pdf.setLineWidth(0.5);
+  pdf.line(mg, y, pw-mg, y);
   
-  // ===== DECLARACIÓN DE ACEPTACIÓN =====
+  // Declaración
   y += 12;
-  pdf.setTextColor(26, 43, 60);
-  pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('DECLARACIÓN DE ACEPTACIÓN:', pageWidth/2, y, { align: 'center' });
-  
+  pdf.setTextColor(26,43,60); pdf.setFontSize(11); pdf.setFont('helvetica','bold');
+  pdf.text('DECLARACIÓN DE ACEPTACIÓN:', pw/2, y, {align:'center'});
   y += 10;
-  pdf.setFontSize(9);
-  pdf.setFont('helvetica', 'normal');
-  
-  const declaracionTexto = 'Por medio de la presente, yo ' + equipmentData.coordinatorName + ', del departamento de ' + equipmentData.department + ' en ' + equipmentData.location + ', DECLARO que he recibido y me hago responsable del equipo descrito anteriormente. Me comprometo a velar por su correcto uso y custodia.';
-  
-  const decLines = pdf.splitTextToSize(declaracionTexto, contentWidth - 20);
-  pdf.text(decLines, pageWidth/2, y, { align: 'center' });
+  pdf.setFontSize(9); pdf.setFont('helvetica','normal');
+  var decTxt = 'Por medio de la presente, yo ' + (equipmentData.coordinatorName||'') + ', del departamento de ' + (equipmentData.department||'') + ' en ' + (equipmentData.location||'') + ', DECLARO que he recibido y me hago responsable del equipo descrito anteriormente. Me comprometo a velar por su correcto uso y custodia.';
+  var decLines = pdf.splitTextToSize(decTxt, cw - 20);
+  pdf.text(decLines, pw/2, y, {align:'center'});
   y += 6 * decLines.length;
   
-  // ===== FIRMA DIGITAL =====
+  // Firma como JPEG
   y += 10;
-  pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(26, 43, 60);
-  pdf.text('Firma Digital:', pageWidth/2, y, { align: 'center' });
-  
+  pdf.setFontSize(12); pdf.setFont('helvetica','bold');
+  pdf.text('Firma Digital:', pw/2, y, {align:'center'});
   y += 5;
+  var sc = document.createElement('canvas');
+  sc.width = canvas.width; sc.height = canvas.height;
+  var sx = sc.getContext('2d');
+  sx.fillStyle = 'white'; sx.fillRect(0, 0, sc.width, sc.height);
+  sx.drawImage(canvas, 0, 0);
+  var sd = sc.toDataURL('image/jpeg', 0.85);
+  var sw = 100, sh = (canvas.height/canvas.width)*sw, sxx = (pw-sw)/2;
+  pdf.setDrawColor(0,174,239); pdf.setLineWidth(0.5);
+  pdf.rect(sxx-3, y-2, sw+6, sh+4);
+  pdf.addImage(sd, 'JPEG', sxx, y, sw, sh);
+  y += sh + 15;
   
-  // Extraer solo la firma del canvas como imagen
-  // Crear canvas temporal con fondo blanco para la firma
-  const sigCanvas = document.createElement('canvas');
-  sigCanvas.width = canvas.width;
-  sigCanvas.height = canvas.height;
-  const sigCtx = sigCanvas.getContext('2d');
-  sigCtx.fillStyle = 'white';
-  sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
-  sigCtx.drawImage(canvas, 0, 0);
+  // Footer
+  pdf.setTextColor(136,136,136); pdf.setFontSize(8); pdf.setFont('helvetica','normal');
+  pdf.text('Documento generado el ' + new Date().toLocaleString('es-GT'), pw/2, y, {align:'center'});
+  pdf.text('Bluemedical - Sistema de Control de Equipos', pw/2, y+5, {align:'center'});
   
-  const sigData = sigCanvas.toDataURL('image/jpeg', 0.8);
-  const sigWidth = 100;
-  const sigHeight = (canvas.height / canvas.width) * sigWidth;
-  const sigX = (pageWidth - sigWidth) / 2;
+  // Limpiar data URI
+  var imageData = pdf.output('datauristring').replace('filename=generated.pdf;', '');
   
-  pdf.setDrawColor(0, 174, 239);
-  pdf.setLineWidth(0.5);
-  pdf.rect(sigX - 3, y - 2, sigWidth + 6, sigHeight + 4);
+  var SAVE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/674446b50d634bd2bf24be0adacba48a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b9k0a8IgME2A22Yk-wXGg9HJyLXSNbFFXiUVpR1G9ak';
   
-  pdf.addImage(sigData, 'JPEG', sigX, y, sigWidth, sigHeight);
-  
-  y += sigHeight + 15;
-  
-  // ===== FOOTER =====
-  pdf.setTextColor(136, 136, 136);
-  pdf.setFontSize(8);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text('Documento generado electrónicamente el ' + new Date().toLocaleString('es-GT'), pageWidth/2, y, { align: 'center' });
-  pdf.text('Bluemedical · Sistema de Control de Equipos', pageWidth/2, y + 5, { align: 'center' });
-  
-  // ===== GENERAR Y ENVIAR =====
-  const pdfBase64 = pdf.output('base64');
-  
-  console.log('📊 Tamaño de PDF:', Math.round(pdfBase64.length / 1024), 'KB');
-  console.log('📋 ID:', registroID);
-  console.log('👤 Usuario:', equipmentData.coordinatorName);
-  
-  // Enviar a Power Automate
-  const SAVE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/674446b50d634bd2bf24be0adacba48a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b9k0a8IgME2A22Yk-wXGg9HJyLXSNbFFXiUVpR1G9ak';
-  
-  fetch(SAVE_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      id: registroID,
-      signature: pdfBase64,
-      timestamp: new Date().toISOString()
-    })
-  })
-  .then(response => {
-    console.log('📥 Respuesta del servidor:', response.status);
-    if (!response.ok) {
-      throw new Error('Error al guardar: ' + response.status);
-    }
-    return response.json();
-  })
-  .then(result => {
-    console.log('✅ Documento guardado exitosamente:', result);
-    document.getElementById('equipmentInfo').style.display = 'none';
-    document.getElementById('successMessage').style.display = 'block';
-    document.getElementById('confirmationCode').textContent = registroID;
-  })
-  .catch(error => {
-    console.error('❌ Error al guardar:', error);
-    btn.disabled = false;
-    btn.textContent = '✅ Confirmar recepción';
-    alert('Error al guardar la firma. Por favor intenta de nuevo o contacta a TI.\n\nError: ' + error.message);
-  });
+  fetch(SAVE_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id:registroID,signature:imageData,timestamp:new Date().toISOString()}) })
+  .then(function(r){if(!r.ok)throw new Error('Error: '+r.status);return r.json()})
+  .then(function(){document.getElementById('equipmentInfo').style.display='none';document.getElementById('successMessage').style.display='block';document.getElementById('confirmationCode').textContent=registroID})
+  .catch(function(e){btn.disabled=false;btn.textContent='✅ Confirmar recepción';alert('Error al guardar.\n'+e.message)});
 }
 </script>
 
