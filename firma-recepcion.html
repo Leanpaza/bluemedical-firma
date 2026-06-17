@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Firma de Devolución - Bluemedical</title>
+<title>Firma de Responsabilidad - Bluemedical</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -46,7 +46,7 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
 <div class="container">
   <div class="header">
     <h1>Bluemedical</h1>
-    <p>Confirmación de Devolución de Equipo</p>
+    <p>Confirmación de Recepción de Equipo</p>
   </div>
 
   <div class="content">
@@ -58,7 +58,7 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
     <!-- Información del equipo -->
     <div id="equipmentInfo" style="display:none">
       <p style="margin-bottom:16px">Estimado(a) <strong id="coordinatorName">...</strong>,</p>
-      <p style="margin-bottom:16px">Por favor confirma la devolución del siguiente equipo:</p>
+      <p style="margin-bottom:16px">Por favor confirma la recepción del siguiente equipo:</p>
 
       <div class="info-box">
         <div class="info-row">
@@ -101,7 +101,7 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
         <div class="btn-group">
           <button class="btn btn-clear" onclick="clearSignature()">🗑️ Limpiar</button>
           <button class="btn btn-submit" id="btnSubmit" onclick="submitSignature()" disabled>
-            ✅ Confirmar devolución
+            ✅ Confirmar recepción
           </button>
         </div>
       </div>
@@ -122,7 +122,7 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
     <div id="successMessage" style="display:none">
       <div class="alert alert-success">
         <strong>✅ ¡Firma registrada exitosamente!</strong>
-        <p style="margin-top:8px">Gracias por confirmar la devolución del equipo.</p>
+        <p style="margin-top:8px">Gracias por confirmar la recepción del equipo.</p>
       </div>
       
       <div class="confirmation-code">
@@ -293,7 +293,7 @@ function loadEquipmentDataFromURL(urlParams) {
 function verificarEstadoFirma() {
   console.log('🔍 Verificando estado de la firma...');
   
-  const VERIFY_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2ec3179a74b046cc89f8bd759135caf3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=LwTXffNw9kBcS3tn1_wLErFA58Syzon9sZUh6Q0M1nw';
+  const VERIFY_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/d3595a15a3fe43a683c64a393edf33c5/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=C32yLi42gk8ehZdbZEHiRN0HIwqSlRBEvIc4J9C7Was';
   
   fetch(VERIFY_URL, {
     method: 'POST',
@@ -381,187 +381,118 @@ function submitSignature() {
   const btn = document.getElementById('btnSubmit');
   btn.disabled = true;
   btn.textContent = '⏳ Guardando firma...';
-  
   console.log('💾 Procesando firma...');
   
-  // Crear PDF con texto nativo (mucho más liviano)
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
-  });
-  
-  const pageWidth = 210;
-  const margin = 20;
-  const contentWidth = pageWidth - (margin * 2);
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pw = 210, mg = 20, cw = pw - mg*2;
   let y = 0;
   
-  // ===== HEADER AZUL =====
+  // Header azul
   pdf.setFillColor(26, 58, 143);
-  pdf.rect(0, 0, pageWidth, 30, 'F');
-  
-  // Logo en el header
+  pdf.rect(0, 0, pw, 30, 'F');
   if (logoLoaded) {
-    try {
-      pdf.addImage(logoImage, 'PNG', pageWidth/2 - 40, 5, 22, 6);
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Bluemedical', pageWidth/2 + 40, 13, { align: 'right' });
-    } catch(e) {
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Bluemedical', pageWidth/2, 13, { align: 'center' });
-    }
-  } else {
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(18);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Bluemedical', pageWidth/2, 13, { align: 'center' });
+    try { pdf.addImage(logoImage, 'PNG', pw/2-40, 5, 22, 6); } catch(e) {}
   }
+  pdf.setTextColor(255,255,255); pdf.setFontSize(18); pdf.setFont('helvetica','bold');
+  pdf.text('Bluemedical', pw/2+15, 13, {align:'center'});
+  pdf.setFontSize(10); pdf.setFont('helvetica','normal');
+  pdf.text('Confirmación de Recepción de Equipo', pw/2, 22, {align:'center'});
   
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text('Confirmación de Devolución de Equipo', pageWidth/2, 22, { align: 'center' });
-  
-  // ===== DATOS DEL EQUIPO =====
+  // Datos del equipo
   y = 45;
-  const labelX = margin;
-  const valueX = margin + 45;
-  
-  const data = [
+  const fields = [
     ['ID Registro:', registroID],
     ['Usuario:', equipmentData.coordinatorName],
     ['Equipo:', equipmentData.equipment],
     ['N° de Serie:', equipmentData.serial],
     ['Sede:', equipmentData.location],
     ['Departamento:', equipmentData.department],
-    ['Recibido por:', equipmentData.technician],
+    ['Entregado por:', equipmentData.technician],
     ['Fecha:', new Date().toLocaleString('es-GT')]
   ];
-  
   if (equipmentData.observations && equipmentData.observations.trim() !== '') {
-    data.push(['Observaciones:', equipmentData.observations]);
+    fields.push(['Observaciones:', equipmentData.observations]);
   }
-  
-  data.forEach(([label, value]) => {
-    pdf.setTextColor(90, 122, 150);
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(label, labelX, y);
-    
-    pdf.setTextColor(26, 43, 60);
-    pdf.setFont('helvetica', 'normal');
-    
-    const maxWidth = contentWidth - 45;
-    const lines = pdf.splitTextToSize(value.toString(), maxWidth);
-    pdf.text(lines, valueX, y);
-    
+  fields.forEach(([label, value]) => {
+    pdf.setTextColor(90,122,150); pdf.setFontSize(10); pdf.setFont('helvetica','bold');
+    pdf.text(label, mg, y);
+    pdf.setTextColor(26,43,60); pdf.setFont('helvetica','normal');
+    const lines = pdf.splitTextToSize(value.toString(), cw - 45);
+    pdf.text(lines, mg + 45, y);
     y += 7 * lines.length;
   });
   
-  // ===== LÍNEA SEPARADORA =====
+  // Línea separadora
   y += 5;
-  pdf.setDrawColor(0, 174, 239);
-  pdf.setLineWidth(0.5);
-  pdf.line(margin, y, pageWidth - margin, y);
+  pdf.setDrawColor(0,174,239); pdf.setLineWidth(0.5);
+  pdf.line(mg, y, pw-mg, y);
   
-  // ===== DECLARACIÓN DE DEVOLUCIÓN =====
+  // Declaración
   y += 12;
-  pdf.setTextColor(26, 43, 60);
-  pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('DECLARACIÓN DE DEVOLUCIÓN:', pageWidth/2, y, { align: 'center' });
-  
+  pdf.setTextColor(26,43,60); pdf.setFontSize(11); pdf.setFont('helvetica','bold');
+  pdf.text('DECLARACIÓN DE ACEPTACIÓN:', pw/2, y, {align:'center'});
   y += 10;
-  pdf.setFontSize(9);
-  pdf.setFont('helvetica', 'normal');
-  
-  const declaracionTexto = 'Por medio de la presente, yo ' + equipmentData.coordinatorName + ', del departamento de ' + equipmentData.department + ' en ' + equipmentData.location + ', DECLARO que he devuelto el equipo descrito anteriormente al departamento de TI de Bluemedical.';
-  
-  const decLines = pdf.splitTextToSize(declaracionTexto, contentWidth - 20);
-  pdf.text(decLines, pageWidth/2, y, { align: 'center' });
+  pdf.setFontSize(9); pdf.setFont('helvetica','normal');
+  const decTxt = 'Por medio de la presente, yo ' + equipmentData.coordinatorName + ', del departamento de ' + equipmentData.department + ' en ' + equipmentData.location + ', DECLARO que he recibido y me hago responsable del equipo descrito anteriormente. Me comprometo a velar por su correcto uso y custodia.';
+  const decLines = pdf.splitTextToSize(decTxt, cw - 20);
+  pdf.text(decLines, pw/2, y, {align:'center'});
   y += 6 * decLines.length;
   
-  // ===== FIRMA DIGITAL =====
+  // Firma
   y += 10;
-  pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(26, 43, 60);
-  pdf.text('Firma Digital:', pageWidth/2, y, { align: 'center' });
-  
+  pdf.setFontSize(12); pdf.setFont('helvetica','bold');
+  pdf.text('Firma Digital:', pw/2, y, {align:'center'});
   y += 5;
   
-  // Crear canvas temporal con fondo blanco para la firma
+  // Fondo blanco para firma JPEG
   const sigCanvas = document.createElement('canvas');
-  sigCanvas.width = canvas.width;
-  sigCanvas.height = canvas.height;
+  sigCanvas.width = canvas.width; sigCanvas.height = canvas.height;
   const sigCtx = sigCanvas.getContext('2d');
   sigCtx.fillStyle = 'white';
   sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
   sigCtx.drawImage(canvas, 0, 0);
+  const sigData = sigCanvas.toDataURL('image/jpeg', 0.85);
   
-  const sigData = sigCanvas.toDataURL('image/jpeg', 0.8);
-  const sigWidth = 100;
-  const sigHeight = (canvas.height / canvas.width) * sigWidth;
-  const sigX = (pageWidth - sigWidth) / 2;
+  const sigW = 100, sigH = (canvas.height/canvas.width)*sigW;
+  const sigX = (pw - sigW) / 2;
+  pdf.setDrawColor(0,174,239); pdf.setLineWidth(0.5);
+  pdf.rect(sigX-3, y-2, sigW+6, sigH+4);
+  pdf.addImage(sigData, 'JPEG', sigX, y, sigW, sigH);
+  y += sigH + 15;
   
-  pdf.setDrawColor(0, 174, 239);
-  pdf.setLineWidth(0.5);
-  pdf.rect(sigX - 3, y - 2, sigWidth + 6, sigHeight + 4);
+  // Footer
+  pdf.setTextColor(136,136,136); pdf.setFontSize(8); pdf.setFont('helvetica','normal');
+  pdf.text('Documento generado electrónicamente el ' + new Date().toLocaleString('es-GT'), pw/2, y, {align:'center'});
+  pdf.text('Bluemedical - Sistema de Control de Equipos', pw/2, y+5, {align:'center'});
   
-  pdf.addImage(sigData, 'JPEG', sigX, y, sigWidth, sigHeight);
+  // Convertir PDF a base64 limpio via arraybuffer
+  const arrBuf = pdf.output('arraybuffer');
+  const bytes = new Uint8Array(arrBuf);
+  let bin = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+  }
+  const imageData = 'data:application/pdf;base64,' + btoa(bin);
+  console.log('📊 Tamaño PDF:', Math.round(imageData.length / 1024), 'KB');
   
-  y += sigHeight + 15;
-  
-  // ===== FOOTER =====
-  pdf.setTextColor(136, 136, 136);
-  pdf.setFontSize(8);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text('Documento generado electrónicamente el ' + new Date().toLocaleString('es-GT'), pageWidth/2, y, { align: 'center' });
-  pdf.text('Bluemedical \u00B7 Sistema de Control de Equipos', pageWidth/2, y + 5, { align: 'center' });
-  
-  // ===== GENERAR Y ENVIAR =====
-  const pdfBase64 = pdf.output('base64');
-  
-  console.log('📊 Tamaño de PDF:', Math.round(pdfBase64.length / 1024), 'KB');
-  console.log('📋 ID:', registroID);
-  console.log('👤 Usuario:', equipmentData.coordinatorName);
-  
-  // Enviar a Power Automate
-  const SAVE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/cccd5c9e1cac46f98b16ca7caf60c7cb/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=O5baIspGq02fHbccpzucg2CErtUTtk3D8gK89f-8Njw';
+  const SAVE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/674446b50d634bd2bf24be0adacba48a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b9k0a8IgME2A22Yk-wXGg9HJyLXSNbFFXiUVpR1G9ak';
   
   fetch(SAVE_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      id: registroID,
-      signature: pdfBase64,
-      timestamp: new Date().toISOString()
-    })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: registroID, signature: imageData, timestamp: new Date().toISOString() })
   })
-  .then(response => {
-    console.log('📥 Respuesta del servidor:', response.status);
-    if (!response.ok) {
-      throw new Error('Error al guardar: ' + response.status);
-    }
-    return response.json();
-  })
+  .then(r => { if (!r.ok) throw new Error('Error: ' + r.status); return r.json(); })
   .then(result => {
-    console.log('\u2705 Documento guardado exitosamente:', result);
     document.getElementById('equipmentInfo').style.display = 'none';
     document.getElementById('successMessage').style.display = 'block';
     document.getElementById('confirmationCode').textContent = registroID;
   })
   .catch(error => {
-    console.error('\u274C Error al guardar:', error);
-    btn.disabled = false;
-    btn.textContent = '\u2705 Confirmar devolución';
-    alert('Error al guardar la firma. Por favor intenta de nuevo o contacta a TI.\n\nError: ' + error.message);
+    btn.disabled = false; btn.textContent = '✅ Confirmar recepción';
+    alert('Error al guardar. Intenta de nuevo.\nError: ' + error.message);
   });
 }
 </script>
