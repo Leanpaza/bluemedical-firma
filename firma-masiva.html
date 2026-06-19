@@ -261,12 +261,12 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="color:#94a3b8;font-size:12px">${i + 1}</td>
-        <td style="font-weight:500">${eq.nombre || '—'}</td>
-        <td>${eq.marca || '—'}</td>
-        <td>${eq.modelo || '—'}</td>
-        <td style="font-family:monospace;font-size:12px;color:#475569">${eq.serie || '—'}</td>
-        <td><span class="tipo-badge">${eq.tipo || '—'}</span></td>
-        <td style="font-size:12px;color:#64748b">${eq.ubicacion || '—'}</td>
+        <td style="font-weight:500">${eq.Nombre_Equipo || '—'}</td>
+        <td>${eq.Marca || '—'}</td>
+        <td>${eq.Modelo || '—'}</td>
+        <td style="font-family:monospace;font-size:12px;color:#475569">${eq.Numero_Serie || '—'}</td>
+        <td><span class="tipo-badge">${eq.Tipo || '—'}</span></td>
+        <td style="font-size:12px;color:#64748b">${eq['Ubicación'] || eq.Ubicacion || '—'}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -444,11 +444,11 @@
       if (i % 2 === 0) { doc.setFillColor(249, 250, 251); doc.rect(14, y - 4, 182, 7, 'F'); }
       doc.setTextColor(51, 65, 85);
       doc.text(String(i + 1),               16, y);
-      doc.text((eq.nombre  || '—').substring(0, 22), 22, y);
-      doc.text((eq.marca   || '—').substring(0, 12), 72, y);
-      doc.text((eq.modelo  || '—').substring(0, 14), 98, y);
-      doc.text((eq.serie   || '—').substring(0, 14),130, y);
-      doc.text((eq.tipo    || '—').substring(0, 12),163, y);
+      doc.text((eq.Nombre_Equipo  || '—').substring(0, 22), 22, y);
+      doc.text((eq.Marca   || '—').substring(0, 12), 72, y);
+      doc.text((eq.Modelo  || '—').substring(0, 14), 98, y);
+      doc.text((eq.Numero_Serie   || '—').substring(0, 14),130, y);
+      doc.text((eq.Tipo    || '—').substring(0, 12),163, y);
       y += 7;
     });
 
