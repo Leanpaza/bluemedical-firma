@@ -273,14 +273,27 @@ function enableSubmitButton() {
 function loadEquipmentDataFromURL(urlParams) {
   console.log('📡 Leyendo datos de la URL...');
   
+  // Función para decodificar parámetros URL (maneja doble codificación)
+  function decodeParam(val) {
+    if (!val) return val;
+    try {
+      var decoded = decodeURIComponent(val);
+      // Si sigue teniendo %20 u otros, decodificar de nuevo
+      while (decoded !== decodeURIComponent(decoded)) {
+        decoded = decodeURIComponent(decoded);
+      }
+      return decoded;
+    } catch(e) { return val; }
+  }
+  
   equipmentData = {
-    coordinatorName: urlParams.get('nombre') || urlParams.get('coordinador') || 'Coordinador',
-    equipment: urlParams.get('equipo') || 'N/A',
-    serial: urlParams.get('serie') || 'N/A',
-    location: urlParams.get('sede') || urlParams.get('clinica') || 'N/A',
-    department: urlParams.get('departamento') || urlParams.get('dept') || 'N/A',
-    technician: urlParams.get('tecnico') || 'N/A',
-    observations: urlParams.get('observaciones') || urlParams.get('obs') || ''
+    coordinatorName: decodeParam(urlParams.get('nombre')) || decodeParam(urlParams.get('coordinador')) || 'Coordinador',
+    equipment: decodeParam(urlParams.get('equipo')) || 'N/A',
+    serial: decodeParam(urlParams.get('serie')) || 'N/A',
+    location: decodeParam(urlParams.get('sede')) || decodeParam(urlParams.get('clinica')) || 'N/A',
+    department: decodeParam(urlParams.get('departamento')) || decodeParam(urlParams.get('dept')) || 'N/A',
+    technician: decodeParam(urlParams.get('tecnico')) || 'N/A',
+    observations: decodeParam(urlParams.get('observaciones')) || decodeParam(urlParams.get('obs')) || ''
   };
   
   console.log('✅ Datos cargados:', equipmentData);
