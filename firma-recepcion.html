@@ -5,40 +5,68 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Firma de Devolución - Bluemedical</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
-.container{max-width:600px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
-.header{background:#1A3A8F;padding:20px;text-align:center}
-.header h1{color:white;font-size:20px;margin-bottom:5px}
-.header p{color:#7CCEF0;font-size:13px}
-.content{padding:24px}
-.info-box{background:#EEF2FB;border-left:4px solid #00AEEF;padding:16px;margin:20px 0;border-radius:4px}
-.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #ddd}
-.info-row:last-child{border-bottom:none}
-.info-label{color:#5A7A96;font-size:14px}
-.info-value{color:#1A2B3C;font-weight:500;font-size:14px;text-align:right;max-width:60%;word-wrap:break-word}
-.signature-section{margin:24px 0}
-.signature-label{font-size:15px;font-weight:500;color:#1A2B3C;margin-bottom:12px}
-.signature-canvas{border:2px dashed #B0C8DC;border-radius:8px;background:white;width:100%;height:200px;cursor:crosshair;touch-action:none}
-.signature-canvas.signed{border-color:#00AEEF;border-style:solid}
-.btn-group{display:flex;gap:10px;margin-top:12px}
-.btn{padding:12px 24px;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:500;flex:1}
-.btn-clear{background:#f0f0f0;color:#666}
-.btn-clear:hover{background:#e0e0e0}
-.btn-submit{background:#00AEEF;color:white}
-.btn-submit:hover{background:#0090C7}
-.btn-submit:disabled{opacity:0.5;cursor:not-allowed}
-.alert{padding:12px 16px;border-radius:8px;margin:16px 0;font-size:13px}
-.alert-warning{background:#FFF8E6;border:1px solid #F5C842;color:#7A5200}
-.alert-error{background:#FEE;border:1px solid #F88;color:#C00}
-.alert-success{background:#E6F5EE;border:1px solid #0A7C4B;color:#0A7C4B}
-.loading{display:none;text-align:center;padding:20px;color:#5A7A96}
+body{font-family:'Inter',sans-serif;background:#EDF1F5;padding:16px;min-height:100vh;display:flex;align-items:flex-start;justify-content:center}
+.container{max-width:540px;width:100%;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(26,58,143,0.08),0 1px 3px rgba(0,0,0,0.04)}
+
+/* Header */
+.header{background:linear-gradient(135deg,#1A3A8F 0%,#0D2B6B 100%);padding:28px 24px;text-align:center;position:relative}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#00AEEF,#7CCEF0,#00AEEF)}
+.header h1{color:white;font-size:22px;font-weight:700;letter-spacing:-0.3px}
+.header p{color:rgba(124,206,240,0.9);font-size:12px;font-weight:500;margin-top:4px;text-transform:uppercase;letter-spacing:1.2px}
+
+/* Content */
+.content{padding:28px 24px}
+.greeting{color:#1A2B3C;font-size:15px;line-height:1.6;margin-bottom:20px}
+.greeting strong{color:#1A3A8F;font-weight:600}
+
+/* Info Box */
+.info-box{background:white;border:1px solid #E2E8F0;border-radius:12px;padding:4px 0;margin:20px 0;overflow:hidden}
+.info-row{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 20px;transition:background 0.15s}
+.info-row:not(:last-child){border-bottom:1px solid #F1F5F9}
+.info-row:hover{background:#F8FAFC}
+.info-label{color:#6B7C8D;font-size:13px;font-weight:500;min-width:120px;flex-shrink:0}
+.info-value{color:#1A2B3C;font-weight:500;font-size:13px;text-align:right;max-width:58%;word-wrap:break-word;line-height:1.4}
+
+/* Signature Section */
+.signature-section{margin:28px 0 8px}
+.signature-label{font-size:14px;font-weight:600;color:#1A2B3C;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.signature-hint{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#6B7C8D;line-height:1.5}
+.signature-hint strong{color:#1A3A8F;font-weight:600}
+.signature-canvas{border:2px dashed #CBD5E1;border-radius:12px;background:#FAFBFC;width:100%;height:200px;cursor:crosshair;touch-action:none;transition:border-color 0.2s,background 0.2s}
+.signature-canvas.signed{border-color:#00AEEF;border-style:solid;background:white}
+
+/* Buttons */
+.btn-group{display:flex;gap:12px;margin-top:16px}
+.btn{padding:14px 24px;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-weight:600;flex:1;font-family:'Inter',sans-serif;transition:all 0.2s;letter-spacing:-0.1px}
+.btn-clear{background:#F1F5F9;color:#64748B;border:1px solid #E2E8F0}
+.btn-clear:hover{background:#E2E8F0;color:#475569}
+.btn-clear:active{transform:scale(0.98)}
+.btn-submit{background:linear-gradient(135deg,#00AEEF,#0090C7);color:white;box-shadow:0 2px 8px rgba(0,174,239,0.3)}
+.btn-submit:hover{background:linear-gradient(135deg,#0090C7,#007AA8);box-shadow:0 4px 12px rgba(0,174,239,0.4);transform:translateY(-1px)}
+.btn-submit:active{transform:translateY(0);box-shadow:0 1px 4px rgba(0,174,239,0.3)}
+.btn-submit:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* Alerts */
+.alert{padding:14px 18px;border-radius:10px;margin:16px 0;font-size:13px;line-height:1.5}
+.alert-warning{background:#FFFBEB;border:1px solid #FDE68A;color:#92400E}
+.alert-error{background:#FEF2F2;border:1px solid #FECACA;color:#991B1B}
+.alert-success{background:#F0FDF4;border:1px solid #BBF7D0;color:#166534}
+
+/* Loading */
+.loading{display:none;text-align:center;padding:40px 20px;color:#6B7C8D}
 .loading.active{display:block}
-.footer{background:#1A3A8F;padding:12px;text-align:center;color:rgba(255,255,255,0.5);font-size:11px}
-.confirmation-code{background:#E6F5EE;border:2px solid #0A7C4B;padding:20px;border-radius:8px;margin:20px 0;text-align:center}
-.confirmation-code h3{color:#0A7C4B;margin-bottom:10px}
-.code-display{background:white;padding:15px;border-radius:6px;font-size:24px;font-weight:bold;font-family:monospace;color:#1A3A8F;margin:10px 0;letter-spacing:2px}
+.loading p{font-size:14px}
+
+/* Footer */
+.footer{background:#F8FAFC;border-top:1px solid #E2E8F0;padding:16px;text-align:center;color:#94A3B8;font-size:11px;font-weight:500;letter-spacing:0.2px}
+
+/* Confirmation */
+.confirmation-code{background:#F0FDF4;border:1px solid #BBF7D0;padding:24px;border-radius:12px;margin:20px 0;text-align:center}
+.confirmation-code h3{color:#166534;margin-bottom:12px;font-size:15px;font-weight:600}
+.code-display{background:white;padding:16px;border-radius:8px;font-size:22px;font-weight:700;font-family:'Inter',monospace;color:#1A3A8F;margin:12px 0;letter-spacing:1px;border:1px solid #E2E8F0}
 </style>
 </head>
 <body>
@@ -52,56 +80,56 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
   <div class="content">
     <!-- Estado de carga -->
     <div class="loading active" id="loadingInfo">
-      <p>⏳ Cargando información del equipo...</p>
+      <p>Cargando información del equipo...</p>
     </div>
 
     <!-- Información del equipo -->
     <div id="equipmentInfo" style="display:none">
-      <p style="margin-bottom:16px">Estimado(a) <strong id="coordinatorName">...</strong>,</p>
-      <p style="margin-bottom:16px">Por favor confirma la devolución del siguiente equipo:</p>
+      <p class="greeting">Estimado(a) <strong id="coordinatorName">...</strong>,<br>
+      Por favor confirma la devolución del siguiente equipo:</p>
 
       <div class="info-box">
         <div class="info-row">
-          <span class="info-label">Equipo:</span>
+          <span class="info-label">Equipo</span>
           <span class="info-value" id="equipment">...</span>
         </div>
         <div class="info-row">
-          <span class="info-label">N° de Serie:</span>
+          <span class="info-label">N° de Serie</span>
           <span class="info-value" id="serial">...</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Sede:</span>
+          <span class="info-label">Sede</span>
           <span class="info-value" id="location">...</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Departamento:</span>
+          <span class="info-label">Departamento</span>
           <span class="info-value" id="department">...</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Entregado por:</span>
+          <span class="info-label">Recibido por</span>
           <span class="info-value" id="technician">...</span>
         </div>
         <div class="info-row" id="observationsRow" style="display:none">
-          <span class="info-label">Observaciones:</span>
+          <span class="info-label">Observaciones</span>
           <span class="info-value" id="observations" style="text-align:left">...</span>
         </div>
         <div class="info-row">
-          <span class="info-label">ID Registro:</span>
-          <span class="info-value"><span id="recordID" style="font-family:monospace;font-size:12px">...</span></span>
+          <span class="info-label">ID Registro</span>
+          <span class="info-value"><span id="recordID" style="font-family:monospace;font-size:11px;color:#6B7C8D">...</span></span>
         </div>
       </div>
 
       <!-- Sección de firma -->
       <div class="signature-section">
-        <div class="signature-label">✍️ Firma digital:</div>
-        <div class="alert alert-warning">
-          <strong>Instrucciones:</strong> Firma con tu dedo (en celular) o mouse (en computadora) dentro del recuadro azul.
+        <div class="signature-label">✍️ Firma digital</div>
+        <div class="signature-hint">
+          <strong>Instrucciones:</strong> Firma con tu dedo (en celular) o mouse (en computadora) dentro del recuadro.
         </div>
         <canvas id="signatureCanvas" class="signature-canvas"></canvas>
         <div class="btn-group">
-          <button class="btn btn-clear" onclick="clearSignature()">🗑️ Limpiar</button>
+          <button class="btn btn-clear" onclick="clearSignature()">Limpiar</button>
           <button class="btn btn-submit" id="btnSubmit" onclick="submitSignature()" disabled>
-            ✅ Confirmar devolución
+            Confirmar devolución
           </button>
         </div>
       </div>
@@ -113,7 +141,7 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
     <!-- Mensaje de error -->
     <div id="errorMessage" style="display:none">
       <div class="alert alert-error">
-        <strong>⚠️ Error:</strong> <span id="errorText">No se pudo cargar la información.</span>
+        <strong>Error:</strong> <span id="errorText">No se pudo cargar la información.</span>
         <p style="margin-top:8px;font-size:12px">Verifica el enlace o contacta al departamento de TI.</p>
       </div>
     </div>
@@ -121,20 +149,20 @@ body{font-family:Arial,sans-serif;background:#f5f7fa;padding:20px}
     <!-- Mensaje de éxito con código de confirmación -->
     <div id="successMessage" style="display:none">
       <div class="alert alert-success">
-        <strong>✅ ¡Firma registrada exitosamente!</strong>
+        <strong>¡Firma registrada exitosamente!</strong>
         <p style="margin-top:8px">Gracias por confirmar la devolución del equipo.</p>
       </div>
       
       <div class="confirmation-code">
-        <h3>📋 Código de Confirmación</h3>
+        <h3>Código de Confirmación</h3>
         <div class="code-display" id="confirmationCode">...</div>
-        <p style="font-size:13px;color:#5A7A96;margin-top:10px">
-          Por favor reporta este código al técnico por WhatsApp, correo o directamente.<br>
-          Este código confirma que recibiste el equipo.
+        <p style="font-size:12px;color:#6B7C8D;margin-top:10px;line-height:1.5">
+          Reporta este código al técnico por WhatsApp, correo o directamente.<br>
+          Este código confirma que devolviste el equipo.
         </p>
       </div>
       
-      <p style="margin-top:12px;font-size:12px;color:#0A7C4B;text-align:center">Puedes cerrar esta ventana.</p>
+      <p style="margin-top:12px;font-size:12px;color:#166534;text-align:center">Puedes cerrar esta ventana.</p>
     </div>
   </div>
 
@@ -396,80 +424,101 @@ function submitSignature() {
   
   var jsPDFLib = window.jspdf.jsPDF;
   var pdf = new jsPDFLib({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  var pw = 210, mg = 20, cw = pw - mg*2;
+  var pw = 210, mg = 25, cw = pw - mg*2;
   var y = 0;
   
-  // Header azul
-  pdf.setFillColor(26, 58, 143);
-  pdf.rect(0, 0, pw, 30, 'F');
-  if (logoLoaded) { try { pdf.addImage(logoImage, 'PNG', pw/2-40, 5, 22, 6); } catch(e) {} }
-  pdf.setTextColor(255,255,255); pdf.setFontSize(18); pdf.setFont('helvetica','bold');
-  pdf.text('Bluemedical', pw/2+15, 13, {align:'center'});
-  pdf.setFontSize(10); pdf.setFont('helvetica','normal');
-  pdf.text('Confirmación de Devolución de Equipo', pw/2, 22, {align:'center'});
+  // ===== HEADER =====
+  pdf.setFillColor(13, 43, 107); pdf.rect(0, 0, pw, 36, 'F');
+  pdf.setFillColor(26, 58, 143); pdf.rect(0, 0, pw, 33, 'F');
+  pdf.setFillColor(0, 174, 239); pdf.rect(0, 33, pw, 1.2, 'F');
   
-  // Datos
-  y = 45;
+  if (logoLoaded) { try { pdf.addImage(logoImage, 'PNG', pw/2-38, 7, 20, 5.5); } catch(e) {} }
+  pdf.setTextColor(255,255,255); pdf.setFontSize(20); pdf.setFont('helvetica','bold');
+  pdf.text('Bluemedical', pw/2+14, 15, {align:'center'});
+  pdf.setFontSize(9); pdf.setFont('helvetica','normal'); pdf.setTextColor(124,206,240);
+  pdf.text('CONFIRMACIÓN DE DEVOLUCIÓN DE EQUIPO', pw/2, 25, {align:'center'});
+  
+  // ===== SECCIÓN DATOS =====
+  y = 46;
+  pdf.setFontSize(10); pdf.setFont('helvetica','bold'); pdf.setTextColor(26,58,143);
+  pdf.text('INFORMACIÓN DEL EQUIPO', mg, y);
+  y += 3;
+  pdf.setDrawColor(226,232,240); pdf.setLineWidth(0.3);
+  pdf.line(mg, y, pw-mg, y);
+  y += 6;
+  
   var fields = [
-    ['ID Registro:', registroID || ''],
-    ['Usuario:', equipmentData.coordinatorName || ''],
-    ['Equipo:', equipmentData.equipment || ''],
-    ['N° de Serie:', equipmentData.serial || ''],
-    ['Sede:', equipmentData.location || ''],
-    ['Departamento:', equipmentData.department || ''],
-    ['Recibido por:', equipmentData.technician || ''],
-    ['Fecha:', new Date().toLocaleString('es-GT')]
+    ['ID Registro', registroID || ''],
+    ['Usuario', equipmentData.coordinatorName || ''],
+    ['Equipo', equipmentData.equipment || ''],
+    ['N° de Serie', equipmentData.serial || ''],
+    ['Sede', equipmentData.location || ''],
+    ['Departamento', equipmentData.department || ''],
+    ['Recibido por', equipmentData.technician || ''],
+    ['Fecha', new Date().toLocaleString('es-GT')]
   ];
   if (equipmentData.observations && equipmentData.observations.trim() !== '') {
-    fields.push(['Observaciones:', equipmentData.observations]);
+    fields.push(['Observaciones', equipmentData.observations]);
   }
+  
+  var labelWidth = 42;
   for (var i = 0; i < fields.length; i++) {
     var label = fields[i][0], value = fields[i][1];
-    pdf.setTextColor(90,122,150); pdf.setFontSize(10); pdf.setFont('helvetica','bold');
-    pdf.text(label, mg, y);
-    pdf.setTextColor(26,43,60); pdf.setFont('helvetica','normal');
-    var lines = pdf.splitTextToSize(String(value), cw - 45);
-    pdf.text(lines, mg + 45, y);
-    y += 7 * lines.length;
+    if (i % 2 === 0) {
+      pdf.setFillColor(248,250,252);
+      pdf.rect(mg, y - 4, cw, 8, 'F');
+    }
+    pdf.setTextColor(107,124,141); pdf.setFontSize(9); pdf.setFont('helvetica','bold');
+    pdf.text(label, mg + 3, y);
+    pdf.setTextColor(26,43,60); pdf.setFontSize(9); pdf.setFont('helvetica','normal');
+    var valLines = pdf.splitTextToSize(String(value), cw - labelWidth - 8);
+    pdf.text(valLines, mg + labelWidth, y);
+    y += 8 * Math.max(valLines.length, 1);
   }
   
-  // Línea
-  y += 5;
-  pdf.setDrawColor(0,174,239); pdf.setLineWidth(0.5);
-  pdf.line(mg, y, pw-mg, y);
-  
-  // Declaración
-  y += 12;
-  pdf.setTextColor(26,43,60); pdf.setFontSize(11); pdf.setFont('helvetica','bold');
-  pdf.text('DECLARACIÓN DE DEVOLUCIÓN:', pw/2, y, {align:'center'});
-  y += 10;
-  pdf.setFontSize(9); pdf.setFont('helvetica','normal');
+  // ===== DECLARACIÓN =====
+  y += 8;
+  var decBoxY = y - 3;
+  pdf.setTextColor(26,58,143); pdf.setFontSize(9); pdf.setFont('helvetica','bold');
+  pdf.text('DECLARACIÓN DE DEVOLUCIÓN', pw/2, y, {align:'center'});
+  y += 8;
+  pdf.setFontSize(8.5); pdf.setFont('helvetica','normal'); pdf.setTextColor(55,65,81);
   var decTxt = 'Por medio de la presente, yo ' + (equipmentData.coordinatorName||'') + ', del departamento de ' + (equipmentData.department||'') + ' en ' + (equipmentData.location||'') + ', DECLARO que he devuelto el equipo descrito anteriormente al departamento de TI de Bluemedical.';
-  var decLines = pdf.splitTextToSize(decTxt, cw - 20);
+  var decLines = pdf.splitTextToSize(decTxt, cw - 16);
   pdf.text(decLines, pw/2, y, {align:'center'});
-  y += 6 * decLines.length;
+  y += 5.5 * decLines.length;
+  var decBoxH = y - decBoxY + 4;
+  pdf.setDrawColor(226,232,240); pdf.setLineWidth(0.3);
+  pdf.roundedRect(mg, decBoxY - 4, cw, decBoxH, 2, 2);
   
-  // Firma como JPEG
-  y += 10;
-  pdf.setFontSize(12); pdf.setFont('helvetica','bold');
-  pdf.text('Firma Digital:', pw/2, y, {align:'center'});
-  y += 5;
+  // ===== FIRMA =====
+  y += 12;
+  pdf.setFontSize(10); pdf.setFont('helvetica','bold'); pdf.setTextColor(26,58,143);
+  pdf.text('FIRMA DIGITAL', pw/2, y, {align:'center'});
+  y += 2;
+  pdf.setDrawColor(0,174,239); pdf.setLineWidth(0.4);
+  var lineW = 30; pdf.line(pw/2 - lineW/2, y, pw/2 + lineW/2, y);
+  y += 6;
+  
   var sc = document.createElement('canvas');
   sc.width = canvas.width; sc.height = canvas.height;
-  var sx = sc.getContext('2d');
-  sx.fillStyle = 'white'; sx.fillRect(0, 0, sc.width, sc.height);
-  sx.drawImage(canvas, 0, 0);
+  var sctx = sc.getContext('2d');
+  sctx.fillStyle = 'white'; sctx.fillRect(0, 0, sc.width, sc.height);
+  sctx.drawImage(canvas, 0, 0);
   var sd = sc.toDataURL('image/jpeg', 0.85);
-  var sw = 100, sh = (canvas.height/canvas.width)*sw, sxx = (pw-sw)/2;
-  pdf.setDrawColor(0,174,239); pdf.setLineWidth(0.5);
-  pdf.rect(sxx-3, y-2, sw+6, sh+4);
-  pdf.addImage(sd, 'JPEG', sxx, y, sw, sh);
-  y += sh + 15;
+  var sigW = 90, sigH = (canvas.height/canvas.width)*sigW, sigX = (pw-sigW)/2;
+  pdf.setDrawColor(200,213,226); pdf.setLineWidth(0.3);
+  pdf.roundedRect(sigX-4, y-3, sigW+8, sigH+6, 2, 2);
+  pdf.addImage(sd, 'JPEG', sigX, y, sigW, sigH);
+  y += sigH + 18;
   
-  // Footer
-  pdf.setTextColor(136,136,136); pdf.setFontSize(8); pdf.setFont('helvetica','normal');
-  pdf.text('Documento generado el ' + new Date().toLocaleString('es-GT'), pw/2, y, {align:'center'});
-  pdf.text('Bluemedical - Sistema de Control de Equipos', pw/2, y+5, {align:'center'});
+  // ===== FOOTER =====
+  pdf.setDrawColor(226,232,240); pdf.setLineWidth(0.3);
+  pdf.line(mg, y, pw-mg, y);
+  y += 6;
+  pdf.setTextColor(148,163,184); pdf.setFontSize(7); pdf.setFont('helvetica','normal');
+  pdf.text('Documento generado electrónicamente el ' + new Date().toLocaleString('es-GT'), pw/2, y, {align:'center'});
+  pdf.text('Bluemedical  ·  Sistema de Control de Equipos', pw/2, y+4, {align:'center'});
   
   // Limpiar data URI
   var imageData = pdf.output('datauristring').replace('filename=generated.pdf;', '');
