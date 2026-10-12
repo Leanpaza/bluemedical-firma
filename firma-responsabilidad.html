@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Firma de Responsabilidad - Bluemedical</title>
+<title>Firma de Cambio de Equipo - Bluemedical</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -86,7 +86,7 @@ body{font-family:'Inter',sans-serif;background:#EDF1F5;padding:16px;min-height:1
 <div class="container">
   <div class="header">
     <h1>Bluemedical</h1>
-    <p>Confirmación de Recepción de Equipo</p>
+    <p>Confirmación de Cambio de Equipo</p>
   </div>
 
   <div class="content">
@@ -96,10 +96,14 @@ body{font-family:'Inter',sans-serif;background:#EDF1F5;padding:16px;min-height:1
 
     <div id="equipmentInfo" style="display:none">
       <p class="greeting">Estimado(a) <strong id="userName">...</strong>,<br>
-      <span id="greetingText">Por favor confirma la recepción del siguiente equipo:</span></p>
+      <span id="greetingText">Por favor confirma el siguiente cambio de equipo:</span></p>
 
-      <div class="section-title">Equipos <span class="eq-count" id="eqCount">0</span></div>
+      <div class="section-title"><span id="eqTitle">Equipos</span> <span class="eq-count" id="eqCount">0</span></div>
       <div class="eq-list" id="eqList"></div>
+      <div id="devBlock" style="display:none">
+        <div class="section-title">Equipos que devuelves a TI <span class="eq-count" id="devCount">0</span></div>
+        <div class="eq-list" id="devList"></div>
+      </div>
 
       <div class="section-title">Datos de la gestión</div>
       <div class="info-box" style="margin-top:0">
@@ -120,7 +124,7 @@ body{font-family:'Inter',sans-serif;background:#EDF1F5;padding:16px;min-height:1
           <span class="info-value" id="department">...</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Entregado por</span>
+          <span class="info-label">Técnico</span>
           <span class="info-value" id="technician">...</span>
         </div>
         <div class="info-row" id="observationsRow" style="display:none">
@@ -142,7 +146,7 @@ body{font-family:'Inter',sans-serif;background:#EDF1F5;padding:16px;min-height:1
         <div class="btn-group">
           <button class="btn btn-clear" onclick="clearSignature()">Limpiar</button>
           <button class="btn btn-submit" id="btnSubmit" onclick="submitSignature()" disabled>
-            Confirmar recepción
+            Confirmar cambio
           </button>
         </div>
       </div>
@@ -158,14 +162,14 @@ body{font-family:'Inter',sans-serif;background:#EDF1F5;padding:16px;min-height:1
     <div id="successMessage" style="display:none">
       <div class="alert alert-success">
         <strong>¡Firma registrada exitosamente!</strong>
-        <p style="margin-top:8px">Gracias por confirmar la recepción.</p>
+        <p style="margin-top:8px">Gracias por confirmar el cambio de equipo.</p>
       </div>
       <div class="confirmation-code">
         <h3>Código de Confirmación</h3>
         <div class="code-display" id="confirmationCode">...</div>
         <p style="font-size:12px;color:#6B7C8D;margin-top:10px;line-height:1.5">
           Reporta este código al técnico por WhatsApp, correo o directamente.<br>
-          Este código confirma que recibiste los equipos detallados.
+          Este código confirma el cambio de equipos detallado.
         </p>
       </div>
       <p style="margin-top:12px;font-size:12px;color:#166534;text-align:center">Puedes cerrar esta ventana.</p>
@@ -183,6 +187,7 @@ var canvas, ctx, isDrawing = false, registroID, equipmentData;
 var logoImage = new Image();
 var logoLoaded = false;
 var MAX_EQUIPOS = 5;
+var MODE = 'cambio';
 
 (function() {
   logoImage.onload = function() { logoLoaded = true; };
@@ -224,15 +229,16 @@ function firstParam(urlParams, names) {
 
 // Equipos: equipo1..equipo5 / serie1..serie5 / tipo1..tipo5 (formato nuevo)
 // o equipo / serie / tipo (formato anterior, un solo equipo)
-function readEquipos(urlParams) {
+function readEquipos(urlParams, px) {
+  px = px || '';
   var list = [];
   for (var n = 1; n <= MAX_EQUIPOS; n++) {
-    var eq = decodeParam(urlParams.get('equipo' + n));
-    var se = decodeParam(urlParams.get('serie' + n));
-    var tp = decodeParam(urlParams.get('tipo' + n));
+    var eq = decodeParam(urlParams.get(px + 'equipo' + n));
+    var se = decodeParam(urlParams.get(px + 'serie' + n));
+    var tp = decodeParam(urlParams.get(px + 'tipo' + n));
     if (eq || se) list.push({ tipo: tp, equipo: eq || 'N/A', serie: se || 'N/A' });
   }
-  if (list.length === 0) {
+  if (list.length === 0 && !px) {
     var eq0 = decodeParam(urlParams.get('equipo'));
     var se0 = decodeParam(urlParams.get('serie'));
     if (eq0 || se0) list.push({ tipo: decodeParam(urlParams.get('tipo')), equipo: eq0 || 'N/A', serie: se0 || 'N/A' });
@@ -249,9 +255,10 @@ function loadEquipmentDataFromURL(urlParams) {
     department: firstParam(urlParams, ['departamento', 'dept']) || 'N/A',
     technician: firstParam(urlParams, ['tecnico']) || 'N/A',
     observations: firstParam(urlParams, ['observaciones', 'obs']),
-    equipos: readEquipos(urlParams)
+    equipos: readEquipos(urlParams),
+    devueltos: MODE === 'cambio' ? readEquipos(urlParams, 'r') : []
   };
-  if (equipmentData.equipos.length === 0) {
+  if (equipmentData.equipos.length === 0 || (MODE === 'cambio' && equipmentData.devueltos.length === 0)) {
     showError('El enlace no contiene equipos. Contacta al departamento de TI.');
     return;
   }
@@ -292,12 +299,23 @@ function displayEquipmentData(data) {
 
   var n = data.equipos.length;
   setText('userName', data.userName);
-  setText('greetingText', n === 1 ? 'Por favor confirma la recepción del siguiente equipo:' : 'Por favor confirma la recepción de los siguientes {n} equipos:'.replace('{n}', n));
+  setText('greetingText', MODE === 'cambio' ? 'Por favor confirma el siguiente cambio de equipo:' : (n === 1 ? '' : ''.replace('{n}', n)));
   setText('eqCount', n);
 
-  var list = document.getElementById('eqList');
+  renderList('eqList', data.equipos);
+  if (MODE === 'cambio') {
+    setText('eqTitle', 'Equipos que recibes');
+    setText('devCount', data.devueltos.length);
+    renderList('devList', data.devueltos);
+    document.getElementById('devBlock').style.display = 'block';
+  }
+  fillInfo(data);
+}
+
+function renderList(id, items) {
+  var list = document.getElementById(id);
   list.innerHTML = '';
-  data.equipos.forEach(function(e, i) {
+  items.forEach(function(e, i) {
     var item = document.createElement('div');
     item.className = 'eq-item';
     item.innerHTML = '<div class="eq-num"></div><div class="eq-body"><div class="eq-type"></div><div class="eq-name"></div><div class="eq-serial"></div></div>';
@@ -308,7 +326,9 @@ function displayEquipmentData(data) {
     item.querySelector('.eq-serial').textContent = 'S/N: ' + e.serie;
     list.appendChild(item);
   });
+}
 
+function fillInfo(data) {
   if (data.employeeCode) { setText('employeeCode', data.employeeCode); document.getElementById('employeeRow').style.display = 'flex'; }
   if (data.country) { setText('country', data.country); document.getElementById('countryRow').style.display = 'flex'; }
   setText('location', data.location);
@@ -470,7 +490,7 @@ function submitSignature() {
   pdf.setTextColor(255, 255, 255); pdf.setFontSize(18); pdf.setFont('helvetica', 'bold');
   pdf.text('Bluemedical', pw / 2, 28, { align: 'center' });
   pdf.setFontSize(9); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(140, 170, 220);
-  pdf.text('Hoja de Responsabilidad - Entrega de Equipo', pw / 2, 36, { align: 'center' });
+  pdf.text('Hoja de Responsabilidad - Cambio de Equipo', pw / 2, 36, { align: 'center' });
   pdf.setFillColor(0, 174, 239); pdf.rect(0, 44, pw, 1, 'F');
 
   // Datos generales
@@ -479,31 +499,39 @@ function submitSignature() {
   y += 6;
   var fields = [['ID Registro', registroID], ['Fecha', fecha], ['Usuario', d.userName], ['Cód. empleado', d.employeeCode]];
   if (d.country) fields.push(['País', d.country]);
-  fields.push(['Sede', d.location], ['Departamento', d.department], ['Entregado por', d.technician]);
+  fields.push(['Sede', d.location], ['Departamento', d.department], ['Técnico', d.technician]);
   if (d.observations) fields.push(['Observaciones', d.observations, 'full']);
   y = drawKeyValueGrid(pdf, fields, mg, y, cw);
 
   // Equipos
   y += 10;
   if (y + 30 > PAGE_BOTTOM) { pdf.addPage(); y = 20; }
-  sectionTitle(pdf, (n === 1 ? 'Equipo' : 'Equipos') + ' (' + n + ')', mg, y);
+  sectionTitle(pdf, (MODE === 'cambio' ? 'Equipo entregado al usuario' : (n === 1 ? 'Equipo' : 'Equipos')) + ' (' + n + ')', mg, y);
   y += 6;
   y = drawEquipmentTable(pdf, d.equipos, mg, y, cw);
+  if (MODE === 'cambio') {
+    y += 10;
+    if (y + 30 > PAGE_BOTTOM) { pdf.addPage(); y = 20; }
+    sectionTitle(pdf, 'Equipo devuelto a TI (' + d.devueltos.length + ')', mg, y);
+    y += 6;
+    y = drawEquipmentTable(pdf, d.devueltos, mg, y, cw);
+  }
 
   // Declaración
   pdf.setFontSize(10); pdf.setFont('helvetica', 'normal');
-  var decTxt = 'Por medio de la presente, yo {nombre}{codigo}, del departamento de {depto} en {sede}, DECLARO que he recibido y me hago responsable de {objeto} anteriormente. Me comprometo a velar por su correcto uso y custodia.'
+  var decTxt = 'Por medio de la presente, yo {nombre}{codigo}, del departamento de {depto} en {sede}, DECLARO que he recibido y me hago responsable de {objeto} en la sección de equipo entregado, y que he devuelto al departamento de TI de Bluemedical {dev}. Me comprometo a velar por el correcto uso y custodia del equipo recibido.'
     .replace('{nombre}', d.userName)
     .replace('{codigo}', d.employeeCode ? ', código de empleado ' + d.employeeCode : '')
     .replace('{depto}', d.department)
     .replace('{sede}', d.location)
-    .replace('{objeto}', n === 1 ? 'el equipo descrito' : 'los ' + n + ' equipos descritos');
+    .replace('{objeto}', n === 1 ? 'el equipo descrito' : 'los ' + n + ' equipos descritos')
+    .replace('{dev}', d.devueltos.length === 1 ? 'el equipo devuelto descrito' : 'los ' + d.devueltos.length + ' equipos devueltos descritos');
   var decLines = pdf.splitTextToSize(decTxt, cw - 10);
   if (y + 26 + decLines.length * 5.2 > PAGE_BOTTOM) { pdf.addPage(); y = 20; } else { y += 10; }
   pdf.setDrawColor(12, 25, 60); pdf.setLineWidth(0.4); pdf.line(mg, y, pw - mg, y);
   y += 8;
   pdf.setFontSize(12); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(12, 25, 60);
-  pdf.text('Declaración de Aceptación', pw / 2, y, { align: 'center' });
+  pdf.text('Declaración de Cambio de Equipo', pw / 2, y, { align: 'center' });
   y += 3;
   pdf.setDrawColor(0, 174, 239); pdf.setLineWidth(0.5); pdf.line(pw / 2 - 22, y, pw / 2 + 22, y);
   y += 8;
@@ -558,7 +586,7 @@ function submitSignature() {
   fetch(SAVE_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: registroID, signature: pdfData, timestamp: new Date().toISOString(), cantidad: n })
+    body: JSON.stringify({ id: registroID, tipo: (MODE === 'cambio' ? 'cambio' : ''), signature: pdfData, timestamp: new Date().toISOString(), cantidad: n })
   })
   .then(function(r) { if (!r.ok) throw new Error('Error: ' + r.status); return r.text(); })
   .then(function() {
@@ -568,7 +596,7 @@ function submitSignature() {
   })
   .catch(function(e) {
     btn.disabled = false;
-    btn.textContent = '✅ Confirmar recepción';
+    btn.textContent = '✅ Confirmar cambio';
     alert('Error al guardar.\n' + e.message);
   });
 }
