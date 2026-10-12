@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Firma de Cambio de Equipo - Bluemedical</title>
+<title>Firma de Responsabilidad - Bluemedical</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -86,7 +86,7 @@ body{font-family:'Inter',sans-serif;background:#EDF1F5;padding:16px;min-height:1
 <div class="container">
   <div class="header">
     <h1>Bluemedical</h1>
-    <p>Confirmación de Cambio de Equipo</p>
+    <p>Confirmación de Recepción de Equipo</p>
   </div>
 
   <div class="content">
@@ -96,7 +96,7 @@ body{font-family:'Inter',sans-serif;background:#EDF1F5;padding:16px;min-height:1
 
     <div id="equipmentInfo" style="display:none">
       <p class="greeting">Estimado(a) <strong id="userName">...</strong>,<br>
-      <span id="greetingText">Por favor confirma el siguiente cambio de equipo:</span></p>
+      <span id="greetingText">Por favor confirma la recepción del siguiente equipo:</span></p>
 
       <div class="section-title"><span id="eqTitle">Equipos</span> <span class="eq-count" id="eqCount">0</span></div>
       <div class="eq-list" id="eqList"></div>
@@ -124,7 +124,7 @@ body{font-family:'Inter',sans-serif;background:#EDF1F5;padding:16px;min-height:1
           <span class="info-value" id="department">...</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Técnico</span>
+          <span class="info-label">Entregado por</span>
           <span class="info-value" id="technician">...</span>
         </div>
         <div class="info-row" id="observationsRow" style="display:none">
@@ -146,7 +146,7 @@ body{font-family:'Inter',sans-serif;background:#EDF1F5;padding:16px;min-height:1
         <div class="btn-group">
           <button class="btn btn-clear" onclick="clearSignature()">Limpiar</button>
           <button class="btn btn-submit" id="btnSubmit" onclick="submitSignature()" disabled>
-            Confirmar cambio
+            Confirmar recepción
           </button>
         </div>
       </div>
@@ -162,14 +162,14 @@ body{font-family:'Inter',sans-serif;background:#EDF1F5;padding:16px;min-height:1
     <div id="successMessage" style="display:none">
       <div class="alert alert-success">
         <strong>¡Firma registrada exitosamente!</strong>
-        <p style="margin-top:8px">Gracias por confirmar el cambio de equipo.</p>
+        <p style="margin-top:8px">Gracias por confirmar la recepción.</p>
       </div>
       <div class="confirmation-code">
         <h3>Código de Confirmación</h3>
         <div class="code-display" id="confirmationCode">...</div>
         <p style="font-size:12px;color:#6B7C8D;margin-top:10px;line-height:1.5">
           Reporta este código al técnico por WhatsApp, correo o directamente.<br>
-          Este código confirma el cambio de equipos detallado.
+          Este código confirma que recibiste los equipos detallados.
         </p>
       </div>
       <p style="margin-top:12px;font-size:12px;color:#166534;text-align:center">Puedes cerrar esta ventana.</p>
@@ -187,7 +187,7 @@ var canvas, ctx, isDrawing = false, registroID, equipmentData;
 var logoImage = new Image();
 var logoLoaded = false;
 var MAX_EQUIPOS = 5;
-var MODE = 'cambio';
+var MODE = 'normal';
 
 (function() {
   logoImage.onload = function() { logoLoaded = true; };
@@ -299,7 +299,7 @@ function displayEquipmentData(data) {
 
   var n = data.equipos.length;
   setText('userName', data.userName);
-  setText('greetingText', MODE === 'cambio' ? 'Por favor confirma el siguiente cambio de equipo:' : (n === 1 ? '' : ''.replace('{n}', n)));
+  setText('greetingText', MODE === 'cambio' ? 'Por favor confirma el siguiente cambio de equipo:' : (n === 1 ? 'Por favor confirma la recepción del siguiente equipo:' : 'Por favor confirma la recepción de los siguientes {n} equipos:'.replace('{n}', n)));
   setText('eqCount', n);
 
   renderList('eqList', data.equipos);
@@ -490,7 +490,7 @@ function submitSignature() {
   pdf.setTextColor(255, 255, 255); pdf.setFontSize(18); pdf.setFont('helvetica', 'bold');
   pdf.text('Bluemedical', pw / 2, 28, { align: 'center' });
   pdf.setFontSize(9); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(140, 170, 220);
-  pdf.text('Hoja de Responsabilidad - Cambio de Equipo', pw / 2, 36, { align: 'center' });
+  pdf.text('Hoja de Responsabilidad - Entrega de Equipo', pw / 2, 36, { align: 'center' });
   pdf.setFillColor(0, 174, 239); pdf.rect(0, 44, pw, 1, 'F');
 
   // Datos generales
@@ -499,7 +499,7 @@ function submitSignature() {
   y += 6;
   var fields = [['ID Registro', registroID], ['Fecha', fecha], ['Usuario', d.userName], ['Cód. empleado', d.employeeCode]];
   if (d.country) fields.push(['País', d.country]);
-  fields.push(['Sede', d.location], ['Departamento', d.department], ['Técnico', d.technician]);
+  fields.push(['Sede', d.location], ['Departamento', d.department], ['Entregado por', d.technician]);
   if (d.observations) fields.push(['Observaciones', d.observations, 'full']);
   y = drawKeyValueGrid(pdf, fields, mg, y, cw);
 
@@ -519,7 +519,7 @@ function submitSignature() {
 
   // Declaración
   pdf.setFontSize(10); pdf.setFont('helvetica', 'normal');
-  var decTxt = 'Por medio de la presente, yo {nombre}{codigo}, del departamento de {depto} en {sede}, DECLARO que he recibido y me hago responsable de {objeto} en la sección de equipo entregado, y que he devuelto al departamento de TI de Bluemedical {dev}. Me comprometo a velar por el correcto uso y custodia del equipo recibido.'
+  var decTxt = 'Por medio de la presente, yo {nombre}{codigo}, del departamento de {depto} en {sede}, DECLARO que he recibido y me hago responsable de {objeto} anteriormente. Me comprometo a velar por su correcto uso y custodia.'
     .replace('{nombre}', d.userName)
     .replace('{codigo}', d.employeeCode ? ', código de empleado ' + d.employeeCode : '')
     .replace('{depto}', d.department)
@@ -531,7 +531,7 @@ function submitSignature() {
   pdf.setDrawColor(12, 25, 60); pdf.setLineWidth(0.4); pdf.line(mg, y, pw - mg, y);
   y += 8;
   pdf.setFontSize(12); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(12, 25, 60);
-  pdf.text('Declaración de Cambio de Equipo', pw / 2, y, { align: 'center' });
+  pdf.text('Declaración de Aceptación', pw / 2, y, { align: 'center' });
   y += 3;
   pdf.setDrawColor(0, 174, 239); pdf.setLineWidth(0.5); pdf.line(pw / 2 - 22, y, pw / 2 + 22, y);
   y += 8;
@@ -596,7 +596,7 @@ function submitSignature() {
   })
   .catch(function(e) {
     btn.disabled = false;
-    btn.textContent = '✅ Confirmar cambio';
+    btn.textContent = '✅ Confirmar recepción';
     alert('Error al guardar.\n' + e.message);
   });
 }
