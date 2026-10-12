@@ -260,14 +260,12 @@ function loadEquipmentDataFromURL(urlParams) {
 
 // ===== Verificar si ya fue firmado =====
 function verificarEstadoFirma() {
-  fetch(VERIFY_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: registroID })
-  })
+  // El flujo de consulta usa GET con ?id= y devuelve la fila dentro de "body"
+  fetch(VERIFY_URL + '&id=' + encodeURIComponent(registroID), { method: 'GET' })
   .then(function(r) { return r.json(); })
   .then(function(data) {
-    if (data && String(data.Estado || '').toLowerCase() === 'firmado') mostrarYaFirmado();
+    var fila = (data && data.body) ? data.body : data;
+    if (fila && String(fila.Estado || '').toLowerCase() === 'firmado') mostrarYaFirmado();
     else displayEquipmentData(equipmentData);
   })
   .catch(function() { displayEquipmentData(equipmentData); });
