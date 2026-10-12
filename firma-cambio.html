@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firma de Cambio de Equipo - Bluemedical</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#EDF1F5;padding:16px;min-height:100vh;display:flex;align-items:flex-start;justify-content:center}
+.container{max-width:540px;width:100%;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(26,58,143,0.08),0 1px 3px rgba(0,0,0,0.04)}
+
+/* Header */
+.header{background:linear-gradient(135deg,#1A3A8F 0%,#0D2B6B 100%);padding:28px 24px;text-align:center;position:relative}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#00AEEF,#7CCEF0,#00AEEF)}
+.header h1{color:white;font-size:22px;font-weight:700;letter-spacing:-0.3px}
+.header p{color:rgba(124,206,240,0.9);font-size:12px;font-weight:500;margin-top:4px;text-transform:uppercase;letter-spacing:1.2px}
+
+/* Content */
+.content{padding:28px 24px}
+.greeting{color:#1A2B3C;font-size:15px;line-height:1.6;margin-bottom:20px}
+.greeting strong{color:#1A3A8F;font-weight:600}
+
+/* Info Box */
+.info-box{background:white;border:1px solid #E2E8F0;border-radius:12px;padding:4px 0;margin:20px 0;overflow:hidden}
+.info-row{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 20px;transition:background 0.15s}
+.info-row:not(:last-child){border-bottom:1px solid #F1F5F9}
+.info-row:hover{background:#F8FAFC}
+.info-label{color:#6B7C8D;font-size:13px;font-weight:500;min-width:120px;flex-shrink:0}
+.info-value{color:#1A2B3C;font-weight:500;font-size:13px;text-align:right;max-width:58%;word-wrap:break-word;line-height:1.4}
+
+/* Signature Section */
+.signature-section{margin:28px 0 8px}
+.signature-label{font-size:14px;font-weight:600;color:#1A2B3C;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.signature-hint{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#6B7C8D;line-height:1.5}
+.signature-hint strong{color:#1A3A8F;font-weight:600}
+.signature-canvas{border:2px dashed #CBD5E1;border-radius:12px;background:#FAFBFC;width:100%;height:200px;cursor:crosshair;touch-action:none;transition:border-color 0.2s,background 0.2s}
+.signature-canvas.signed{border-color:#00AEEF;border-style:solid;background:white}
+
+/* Buttons */
+.btn-group{display:flex;gap:12px;margin-top:16px}
+.btn{padding:14px 24px;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-weight:600;flex:1;font-family:'Inter',sans-serif;transition:all 0.2s;letter-spacing:-0.1px}
+.btn-clear{background:#F1F5F9;color:#64748B;border:1px solid #E2E8F0}
+.btn-clear:hover{background:#E2E8F0;color:#475569}
+.btn-clear:active{transform:scale(0.98)}
+.btn-submit{background:linear-gradient(135deg,#00AEEF,#0090C7);color:white;box-shadow:0 2px 8px rgba(0,174,239,0.3)}
+.btn-submit:hover{background:linear-gradient(135deg,#0090C7,#007AA8);box-shadow:0 4px 12px rgba(0,174,239,0.4);transform:translateY(-1px)}
+.btn-submit:active{transform:translateY(0);box-shadow:0 1px 4px rgba(0,174,239,0.3)}
+.btn-submit:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* Alerts */
+.alert{padding:14px 18px;border-radius:10px;margin:16px 0;font-size:13px;line-height:1.5}
+.alert-warning{background:#FFFBEB;border:1px solid #FDE68A;color:#92400E}
+.alert-error{background:#FEF2F2;border:1px solid #FECACA;color:#991B1B}
+.alert-success{background:#F0FDF4;border:1px solid #BBF7D0;color:#166534}
+
+/* Loading */
+.loading{display:none;text-align:center;padding:40px 20px;color:#6B7C8D}
+.loading.active{display:block}
+.loading p{font-size:14px}
+
+/* Footer */
+.footer{background:#F8FAFC;border-top:1px solid #E2E8F0;padding:16px;text-align:center;color:#94A3B8;font-size:11px;font-weight:500;letter-spacing:0.2px}
+
+/* Confirmation */
+.confirmation-code{background:#F0FDF4;border:1px solid #BBF7D0;padding:24px;border-radius:12px;margin:20px 0;text-align:center}
+.confirmation-code h3{color:#166534;margin-bottom:12px;font-size:15px;font-weight:600}
+.code-display{background:white;padding:16px;border-radius:8px;font-size:22px;font-weight:700;font-family:'Inter',monospace;color:#1A3A8F;margin:12px 0;letter-spacing:1px;border:1px solid #E2E8F0}
+
+/* Lista de equipos */
+.section-title{font-size:13px;font-weight:600;color:#1A3A8F;text-transform:uppercase;letter-spacing:0.8px;margin:22px 0 10px}
+.eq-list{border:1px solid #E2E8F0;border-radius:12px;overflow:hidden}
+.eq-item{display:flex;gap:12px;padding:12px 16px;align-items:flex-start}
+.eq-item:not(:last-child){border-bottom:1px solid #F1F5F9}
+.eq-num{background:#EAF6FD;color:#0090C7;font-weight:700;font-size:12px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.eq-body{flex:1;min-width:0}
+.eq-type{font-size:11px;font-weight:600;color:#6B7C8D;text-transform:uppercase;letter-spacing:0.6px}
+.eq-name{font-size:14px;font-weight:600;color:#1A2B3C;margin-top:2px;word-wrap:break-word}
+.eq-serial{font-size:12px;color:#6B7C8D;margin-top:2px;font-family:monospace;word-break:break-all}
+.eq-count{background:#1A3A8F;color:white;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Bluemedical</h1>
+    <p>Confirmación de Cambio de Equipo</p>
+  </div>
+
+  <div class="content">
+    <div class="loading active" id="loadingInfo">
+      <p>Cargando información...</p>
+    </div>
+
+    <div id="equipmentInfo" style="display:none">
+      <p class="greeting">Estimado(a) <strong id="userName">...</strong>,<br>
+      <span id="greetingText">Por favor confirma el siguiente cambio de equipo:</span></p>
+
+      <div class="section-title"><span id="eqTitle">Equipos</span> <span class="eq-count" id="eqCount">0</span></div>
+      <div class="eq-list" id="eqList"></div>
+      <div id="devBlock" style="display:none">
+        <div class="section-title">Equipos que devuelves a TI <span class="eq-count" id="devCount">0</span></div>
+        <div class="eq-list" id="devList"></div>
+      </div>
+
+      <div class="section-title">Datos de la gestión</div>
+      <div class="info-box" style="margin-top:0">
+        <div class="info-row" id="employeeRow" style="display:none">
+          <span class="info-label">Código de empleado</span>
+          <span class="info-value" id="employeeCode">...</span>
+        </div>
+        <div class="info-row" id="countryRow" style="display:none">
+          <span class="info-label">País</span>
+          <span class="info-value" id="country">...</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Sede</span>
+          <span class="info-value" id="location">...</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Departamento</span>
+          <span class="info-value" id="department">...</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Técnico</span>
+          <span class="info-value" id="technician">...</span>
+        </div>
+        <div class="info-row" id="observationsRow" style="display:none">
+          <span class="info-label">Observaciones</span>
+          <span class="info-value" id="observations" style="text-align:left">...</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">ID Registro</span>
+          <span class="info-value"><span id="recordID" style="font-family:monospace;font-size:11px;color:#6B7C8D">...</span></span>
+        </div>
+      </div>
+
+      <div class="signature-section">
+        <div class="signature-label">✍️ Firma digital</div>
+        <div class="signature-hint">
+          <strong>Instrucciones:</strong> Firma con tu dedo (en celular) o mouse (en computadora) dentro del recuadro.
+        </div>
+        <canvas id="signatureCanvas" class="signature-canvas"></canvas>
+        <div class="btn-group">
+          <button class="btn btn-clear" onclick="clearSignature()">Limpiar</button>
+          <button class="btn btn-submit" id="btnSubmit" onclick="submitSignature()" disabled>
+            Confirmar cambio
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="errorMessage" style="display:none">
+      <div class="alert alert-error">
+        <strong>Error:</strong> <span id="errorText">No se pudo cargar la información.</span>
+        <p style="margin-top:8px;font-size:12px">Verifica el enlace o contacta al departamento de TI.</p>
+      </div>
+    </div>
+
+    <div id="successMessage" style="display:none">
+      <div class="alert alert-success">
+        <strong>¡Firma registrada exitosamente!</strong>
+        <p style="margin-top:8px">Gracias por confirmar el cambio de equipo.</p>
+      </div>
+      <div class="confirmation-code">
+        <h3>Código de Confirmación</h3>
+        <div class="code-display" id="confirmationCode">...</div>
+        <p style="font-size:12px;color:#6B7C8D;margin-top:10px;line-height:1.5">
+          Reporta este código al técnico por WhatsApp, correo o directamente.<br>
+          Este código confirma el cambio de equipos detallado.
+        </p>
+      </div>
+      <p style="margin-top:12px;font-size:12px;color:#166534;text-align:center">Puedes cerrar esta ventana.</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    Bluemedical · Sistema de Control de Equipos
+  </div>
+</div>
+
+<script>
+// Variables globales
+var canvas, ctx, isDrawing = false, registroID, equipmentData;
+var logoImage = new Image();
+var logoLoaded = false;
+var MAX_EQUIPOS = 5;
+var MODE = 'cambio';
+
+(function() {
+  logoImage.onload = function() { logoLoaded = true; };
+  logoImage.onerror = function() { logoLoaded = false; };
+  logoImage.src = 'data:image/png;base64,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';
+})();
+
+var VERIFY_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/d3595a15a3fe43a683c64a393edf33c5/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=C32yLi42gk8ehZdbZEHiRN0HIwqSlRBEvIc4J9C7Was';
+var SAVE_URL = 'https://default7539c3c03a56420486cafda939c796.94.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/674446b50d634bd2bf24be0adacba48a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=b9k0a8IgME2A22Yk-wXGg9HJyLXSNbFFXiUVpR1G9ak';
+
+window.onload = function() {
+  var urlParams = new URLSearchParams(window.location.search);
+  registroID = urlParams.get('id');
+  if (!registroID) {
+    showError('No se proporcionó un ID de registro válido. Verifica el enlace.');
+    return;
+  }
+  loadEquipmentDataFromURL(urlParams);
+};
+
+// ===== Lectura de parámetros =====
+function decodeParam(val) {
+  if (!val) return '';
+  try {
+    var decoded = decodeURIComponent(val.replace(/\+/g, ' '));
+    var guard = 0;
+    while (decoded !== decodeURIComponent(decoded) && guard < 5) { decoded = decodeURIComponent(decoded); guard++; }
+    return decoded.trim();
+  } catch (e) { return String(val).trim(); }
+}
+
+function firstParam(urlParams, names) {
+  for (var i = 0; i < names.length; i++) {
+    var v = decodeParam(urlParams.get(names[i]));
+    if (v) return v;
+  }
+  return '';
+}
+
+// Equipos: equipo1..equipo5 / serie1..serie5 / tipo1..tipo5 (formato nuevo)
+// o equipo / serie / tipo (formato anterior, un solo equipo)
+function readEquipos(urlParams, px) {
+  px = px || '';
+  var list = [];
+  for (var n = 1; n <= MAX_EQUIPOS; n++) {
+    var eq = decodeParam(urlParams.get(px + 'equipo' + n));
+    var se = decodeParam(urlParams.get(px + 'serie' + n));
+    var tp = decodeParam(urlParams.get(px + 'tipo' + n));
+    if (eq || se) list.push({ tipo: tp, equipo: eq || 'N/A', serie: se || 'N/A' });
+  }
+  if (list.length === 0 && !px) {
+    var eq0 = decodeParam(urlParams.get('equipo'));
+    var se0 = decodeParam(urlParams.get('serie'));
+    if (eq0 || se0) list.push({ tipo: decodeParam(urlParams.get('tipo')), equipo: eq0 || 'N/A', serie: se0 || 'N/A' });
+  }
+  return list;
+}
+
+function loadEquipmentDataFromURL(urlParams) {
+  equipmentData = {
+    userName: firstParam(urlParams, ['usuario', 'nombre', 'coordinador']) || 'Usuario',
+    employeeCode: firstParam(urlParams, ['codigo', 'codigo_empleado']),
+    country: firstParam(urlParams, ['pais']),
+    location: firstParam(urlParams, ['sede', 'clinica']) || 'N/A',
+    department: firstParam(urlParams, ['departamento', 'dept']) || 'N/A',
+    technician: firstParam(urlParams, ['tecnico']) || 'N/A',
+    observations: firstParam(urlParams, ['observaciones', 'obs']),
+    equipos: readEquipos(urlParams),
+    devueltos: MODE === 'cambio' ? readEquipos(urlParams, 'r') : []
+  };
+  if (equipmentData.equipos.length === 0 || (MODE === 'cambio' && equipmentData.devueltos.length === 0)) {
+    showError('El enlace no contiene equipos. Contacta al departamento de TI.');
+    return;
+  }
+  verificarEstadoFirma();
+}
+
+// ===== Verificar si ya fue firmado =====
+function verificarEstadoFirma() {
+  // El flujo de consulta usa GET con ?id= y devuelve la fila dentro de "body"
+  fetch(VERIFY_URL + '&id=' + encodeURIComponent(registroID), { method: 'GET' })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var fila = (data && data.body) ? data.body : data;
+    if (fila && String(fila.Estado || '').toLowerCase() === 'firmado') mostrarYaFirmado();
+    else displayEquipmentData(equipmentData);
+  })
+  .catch(function() { displayEquipmentData(equipmentData); });
+}
+
+function mostrarYaFirmado() {
+  document.getElementById('loadingInfo').classList.remove('active');
+  var errorDiv = document.getElementById('errorMessage');
+  errorDiv.style.display = 'block';
+  document.getElementById('errorText').textContent = 'Este registro ya fue firmado anteriormente. No es posible firmar nuevamente.';
+  var box = document.createElement('div');
+  box.style.cssText = 'margin-top:16px;padding:12px;background:#E6F5EE;border-radius:6px';
+  box.innerHTML = '<p style="margin:0;color:#0A7C4B;font-size:14px"><strong>✅ Firma ya registrada</strong><br><span style="font-size:13px"></span></p>';
+  box.querySelector('span').textContent = 'ID: ' + registroID;
+  errorDiv.appendChild(box);
+}
+
+// ===== Mostrar datos =====
+function setText(id, val) { document.getElementById(id).textContent = val; }
+
+function displayEquipmentData(data) {
+  document.getElementById('loadingInfo').classList.remove('active');
+  document.getElementById('equipmentInfo').style.display = 'block';
+
+  var n = data.equipos.length;
+  setText('userName', data.userName);
+  setText('greetingText', MODE === 'cambio' ? 'Por favor confirma el siguiente cambio de equipo:' : (n === 1 ? '' : ''.replace('{n}', n)));
+  setText('eqCount', n);
+
+  renderList('eqList', data.equipos);
+  if (MODE === 'cambio') {
+    setText('eqTitle', 'Equipos que recibes');
+    setText('devCount', data.devueltos.length);
+    renderList('devList', data.devueltos);
+    document.getElementById('devBlock').style.display = 'block';
+  }
+  fillInfo(data);
+}
+
+function renderList(id, items) {
+  var list = document.getElementById(id);
+  list.innerHTML = '';
+  items.forEach(function(e, i) {
+    var item = document.createElement('div');
+    item.className = 'eq-item';
+    item.innerHTML = '<div class="eq-num"></div><div class="eq-body"><div class="eq-type"></div><div class="eq-name"></div><div class="eq-serial"></div></div>';
+    item.querySelector('.eq-num').textContent = i + 1;
+    var t = item.querySelector('.eq-type');
+    if (e.tipo) t.textContent = e.tipo; else t.remove();
+    item.querySelector('.eq-name').textContent = e.equipo;
+    item.querySelector('.eq-serial').textContent = 'S/N: ' + e.serie;
+    list.appendChild(item);
+  });
+}
+
+function fillInfo(data) {
+  if (data.employeeCode) { setText('employeeCode', data.employeeCode); document.getElementById('employeeRow').style.display = 'flex'; }
+  if (data.country) { setText('country', data.country); document.getElementById('countryRow').style.display = 'flex'; }
+  setText('location', data.location);
+  setText('department', data.department);
+  setText('technician', data.technician);
+  setText('recordID', registroID);
+  if (data.observations) { setText('observations', data.observations); document.getElementById('observationsRow').style.display = 'flex'; }
+
+  setTimeout(setupCanvas, 100);
+}
+
+function showError(message) {
+  document.getElementById('loadingInfo').classList.remove('active');
+  document.getElementById('errorMessage').style.display = 'block';
+  setText('errorText', message);
+}
+
+// ===== Canvas de firma =====
+function setupCanvas() {
+  canvas = document.getElementById('signatureCanvas');
+  ctx = canvas.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var w = canvas.offsetWidth, h = 200;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr);
+  ctx.strokeStyle = '#1A3A8F'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  canvas.dpr = dpr;
+  canvas.addEventListener('mousedown', startDrawing);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mouseout', stopDrawing);
+  canvas.addEventListener('touchstart', handleTouch);
+  canvas.addEventListener('touchmove', handleTouch);
+  canvas.addEventListener('touchend', stopDrawing);
+}
+function startDrawing(e) { isDrawing = true; ctx.beginPath(); var r = canvas.getBoundingClientRect(); ctx.moveTo(e.clientX - r.left, e.clientY - r.top); }
+function draw(e) { if (!isDrawing) return; var r = canvas.getBoundingClientRect(); ctx.lineTo(e.clientX - r.left, e.clientY - r.top); ctx.stroke(); enableSubmitButton(); }
+function stopDrawing() { isDrawing = false; }
+function handleTouch(e) {
+  e.preventDefault();
+  var t = e.touches[0];
+  if (!t) return;
+  canvas.dispatchEvent(new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', { clientX: t.clientX, clientY: t.clientY }));
+}
+function clearSignature() {
+  var dpr = canvas.dpr || 1;
+  ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+  canvas.classList.remove('signed');
+  document.getElementById('btnSubmit').disabled = true;
+}
+function enableSubmitButton() { canvas.classList.add('signed'); document.getElementById('btnSubmit').disabled = false; }
+
+// ===== PDF =====
+var PAGE_BOTTOM = 280;
+
+function sectionTitle(pdf, text, x, y) {
+  pdf.setFontSize(11); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(12, 25, 60);
+  pdf.text(text, x, y);
+  pdf.setDrawColor(0, 174, 239); pdf.setLineWidth(0.5);
+  pdf.line(x, y + 1.8, x + pdf.getTextWidth(text), y + 1.8);
+}
+
+function drawKeyValueGrid(pdf, fields, x, y, w) {
+  // Dos pares etiqueta/valor por fila; los campos marcados como "full" ocupan toda la fila
+  var half = w / 2, lab = 30, rows = [], pending = null;
+  fields.forEach(function(f) {
+    if (f[2] === 'full') { if (pending) { rows.push([pending]); pending = null; } rows.push([f]); }
+    else if (pending) { rows.push([pending, f]); pending = null; }
+    else pending = f;
+  });
+  if (pending) rows.push([pending]);
+  var startY = y;
+  pdf.setDrawColor(12, 25, 60); pdf.setLineWidth(0.6); pdf.line(x, y, x + w, y);
+  rows.forEach(function(row, i) {
+    var full = row.length === 1 && row[0][2] === 'full';
+    pdf.setFontSize(9.5); pdf.setFont('helvetica', 'normal');
+    var cellW = full ? w : half;
+    var vals = row.map(function(f) { return pdf.splitTextToSize(String(f[1] || '-'), cellW - lab - 6); });
+    var lines = Math.max.apply(null, vals.map(function(v) { return v.length; }));
+    var rowH = Math.max(lines * 4.6 + 3.6, 8.5);
+    if (i % 2 === 0) { pdf.setFillColor(243, 246, 250); pdf.rect(x, y, w, rowH, 'F'); }
+    pdf.setDrawColor(210, 218, 230); pdf.setLineWidth(0.2);
+    pdf.line(x, y + rowH, x + w, y + rowH);
+    row.forEach(function(f, k) {
+      var cx = x + k * half;
+      if (k === 1) pdf.line(cx, y, cx, y + rowH);
+      pdf.line(cx + lab, y, cx + lab, y + rowH);
+      pdf.setFontSize(8.5); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(60, 75, 100);
+      pdf.text(pdf.splitTextToSize(f[0], lab - 4), cx + 3, y + 5.6);
+      pdf.setFontSize(9.5); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(20, 30, 50);
+      pdf.text(vals[k], cx + lab + 3, y + 5.6);
+    });
+    y += rowH;
+  });
+  pdf.setDrawColor(210, 218, 230); pdf.setLineWidth(0.2);
+  pdf.line(x, startY, x, y); pdf.line(x + w, startY, x + w, y);
+  pdf.setDrawColor(12, 25, 60); pdf.setLineWidth(0.6); pdf.line(x, y, x + w, y);
+  return y;
+}
+
+function drawEquipmentTable(pdf, equipos, x, y, w) {
+  var cols = [
+    { h: '#', w: 10 },
+    { h: 'Tipo', w: 34 },
+    { h: 'Marca / Modelo', w: w - 10 - 34 - 52 },
+    { h: 'N° de Serie', w: 52 }
+  ];
+  function header() {
+    pdf.setFillColor(12, 25, 60); pdf.rect(x, y, w, 8, 'F');
+    pdf.setTextColor(255, 255, 255); pdf.setFontSize(9); pdf.setFont('helvetica', 'bold');
+    var cx = x;
+    cols.forEach(function(c) { pdf.text(c.h, cx + 3, y + 5.4); cx += c.w; });
+    y += 8;
+  }
+  header();
+  for (var i = 0; i < equipos.length; i++) {
+    var e = equipos[i];
+    pdf.setFontSize(9.5); pdf.setFont('helvetica', 'normal');
+    var cells = [String(i + 1), e.tipo || '-', e.equipo, e.serie].map(function(t, k) {
+      return pdf.splitTextToSize(String(t), cols[k].w - 5);
+    });
+    var lines = Math.max.apply(null, cells.map(function(c) { return c.length; }));
+    var rowH = Math.max(lines * 4.6 + 3.6, 8.5);
+    if (y + rowH > PAGE_BOTTOM) { pdf.addPage(); y = 20; header(); }
+    if (i % 2 === 1) { pdf.setFillColor(243, 246, 250); pdf.rect(x, y, w, rowH, 'F'); }
+    pdf.setTextColor(20, 30, 50);
+    var cx = x;
+    cells.forEach(function(c, k) {
+      pdf.setFont('helvetica', k === 3 ? 'bold' : 'normal');
+      pdf.text(c, cx + 3, y + 5.8);
+      cx += cols[k].w;
+    });
+    pdf.setDrawColor(210, 218, 230); pdf.setLineWidth(0.2);
+    pdf.line(x, y + rowH, x + w, y + rowH);
+    cx = x;
+    pdf.line(cx, y, cx, y + rowH);
+    cols.forEach(function(c) { cx += c.w; pdf.line(cx, y, cx, y + rowH); });
+    y += rowH;
+  }
+  pdf.setDrawColor(12, 25, 60); pdf.setLineWidth(0.6);
+  pdf.line(x, y, x + w, y);
+  return y;
+}
+
+function submitSignature() {
+  var btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.textContent = '⏳ Guardando firma...';
+
+  var pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  var pw = 210, mg = 20, cw = pw - mg * 2, y;
+  var d = equipmentData, n = d.equipos.length;
+  var fecha = new Date().toLocaleString('es-GT');
+
+  // Header
+  pdf.setFillColor(12, 25, 60); pdf.rect(0, 0, pw, 44, 'F');
+  if (logoLoaded) { try { pdf.addImage(logoImage, 'PNG', pw / 2 - 8, 4, 16, 16); } catch (e) {} }
+  pdf.setTextColor(255, 255, 255); pdf.setFontSize(18); pdf.setFont('helvetica', 'bold');
+  pdf.text('Bluemedical', pw / 2, 28, { align: 'center' });
+  pdf.setFontSize(9); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(140, 170, 220);
+  pdf.text('Hoja de Responsabilidad - Cambio de Equipo', pw / 2, 36, { align: 'center' });
+  pdf.setFillColor(0, 174, 239); pdf.rect(0, 44, pw, 1, 'F');
+
+  // Datos generales
+  y = 56;
+  sectionTitle(pdf, 'Datos de la gestión', mg, y);
+  y += 6;
+  var fields = [['ID Registro', registroID], ['Fecha', fecha], ['Usuario', d.userName], ['Cód. empleado', d.employeeCode]];
+  if (d.country) fields.push(['País', d.country]);
+  fields.push(['Sede', d.location], ['Departamento', d.department], ['Técnico', d.technician]);
+  if (d.observations) fields.push(['Observaciones', d.observations, 'full']);
+  y = drawKeyValueGrid(pdf, fields, mg, y, cw);
+
+  // Equipos
+  y += 10;
+  if (y + 30 > PAGE_BOTTOM) { pdf.addPage(); y = 20; }
+  sectionTitle(pdf, (MODE === 'cambio' ? 'Equipo entregado al usuario' : (n === 1 ? 'Equipo' : 'Equipos')) + ' (' + n + ')', mg, y);
+  y += 6;
+  y = drawEquipmentTable(pdf, d.equipos, mg, y, cw);
+  if (MODE === 'cambio') {
+    y += 10;
+    if (y + 30 > PAGE_BOTTOM) { pdf.addPage(); y = 20; }
+    sectionTitle(pdf, 'Equipo devuelto a TI (' + d.devueltos.length + ')', mg, y);
+    y += 6;
+    y = drawEquipmentTable(pdf, d.devueltos, mg, y, cw);
+  }
+
+  // Declaración
+  pdf.setFontSize(10); pdf.setFont('helvetica', 'normal');
+  var decTxt = 'Por medio de la presente, yo {nombre}{codigo}, del departamento de {depto} en {sede}, DECLARO que he recibido y me hago responsable de {objeto} en la sección de equipo entregado, y que he devuelto al departamento de TI de Bluemedical {dev}. Me comprometo a velar por el correcto uso y custodia del equipo recibido.'
+    .replace('{nombre}', d.userName)
+    .replace('{codigo}', d.employeeCode ? ', código de empleado ' + d.employeeCode : '')
+    .replace('{depto}', d.department)
+    .replace('{sede}', d.location)
+    .replace('{objeto}', n === 1 ? 'el equipo descrito' : 'los ' + n + ' equipos descritos')
+    .replace('{dev}', d.devueltos.length === 1 ? 'el equipo devuelto descrito' : 'los ' + d.devueltos.length + ' equipos devueltos descritos');
+  var decLines = pdf.splitTextToSize(decTxt, cw - 10);
+  if (y + 26 + decLines.length * 5.2 > PAGE_BOTTOM) { pdf.addPage(); y = 20; } else { y += 10; }
+  pdf.setDrawColor(12, 25, 60); pdf.setLineWidth(0.4); pdf.line(mg, y, pw - mg, y);
+  y += 8;
+  pdf.setFontSize(12); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(12, 25, 60);
+  pdf.text('Declaración de Cambio de Equipo', pw / 2, y, { align: 'center' });
+  y += 3;
+  pdf.setDrawColor(0, 174, 239); pdf.setLineWidth(0.5); pdf.line(pw / 2 - 22, y, pw / 2 + 22, y);
+  y += 8;
+  pdf.setFontSize(10); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(40, 50, 70);
+  pdf.text(decLines, pw / 2, y, { align: 'center' });
+  y += 5.2 * decLines.length;
+
+  // Firma
+  var ratio = canvas.height / canvas.width, sigW = 76, sigH = ratio * sigW;
+  if (sigH > 30) { sigH = 30; sigW = sigH / ratio; }
+  if (y + sigH + 36 > 291) { pdf.addPage(); y = 20; } else { y += 6; }
+  pdf.setDrawColor(12, 25, 60); pdf.setLineWidth(0.4); pdf.line(mg, y, pw - mg, y);
+  y += 8;
+  pdf.setFontSize(12); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(12, 25, 60);
+  pdf.text('Firma Digital', pw / 2, y, { align: 'center' });
+  y += 3;
+  pdf.setDrawColor(0, 174, 239); pdf.setLineWidth(0.5); pdf.line(pw / 2 - 18, y, pw / 2 + 18, y);
+  y += 8;
+  var sc = document.createElement('canvas');
+  sc.width = canvas.width; sc.height = canvas.height;
+  var sctx = sc.getContext('2d');
+  sctx.fillStyle = 'white'; sctx.fillRect(0, 0, sc.width, sc.height);
+  sctx.drawImage(canvas, 0, 0);
+  var sigX = (pw - sigW) / 2;
+  pdf.setDrawColor(180, 190, 210); pdf.setLineWidth(0.3);
+  pdf.roundedRect(sigX - 4, y - 3, sigW + 8, sigH + 6, 2, 2);
+  pdf.addImage(sc.toDataURL('image/jpeg', 0.85), 'JPEG', sigX, y, sigW, sigH);
+  y += sigH + 7;
+  pdf.setFontSize(9); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(60, 75, 100);
+  pdf.text(d.userName + (d.employeeCode ? '  ·  Cód. ' + d.employeeCode : ''), pw / 2, y, { align: 'center' });
+  y += 6;
+
+  // Footer
+  pdf.setDrawColor(12, 25, 60); pdf.setLineWidth(0.3); pdf.line(mg, y, pw - mg, y);
+  y += 6;
+  pdf.setTextColor(140, 150, 170); pdf.setFontSize(7.5);
+  pdf.text('Documento generado electrónicamente el ' + fecha, pw / 2, y, { align: 'center' });
+  pdf.text('Bluemedical  ·  Sistema de Control de Equipos', pw / 2, y + 4.5, { align: 'center' });
+
+  // Numeración de páginas
+  var pages = pdf.getNumberOfPages();
+  if (pages > 1) {
+    for (var p = 1; p <= pages; p++) {
+      pdf.setPage(p);
+      pdf.setFontSize(7.5); pdf.setTextColor(140, 150, 170);
+      pdf.text('Página ' + p + ' de ' + pages, pw - mg, 292, { align: 'right' });
+    }
+  }
+
+  var pdfData = pdf.output('datauristring').replace('filename=generated.pdf;', '');
+
+  fetch(SAVE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: registroID, tipo: (MODE === 'cambio' ? 'cambio' : ''), signature: pdfData, timestamp: new Date().toISOString(), cantidad: n })
+  })
+  .then(function(r) { if (!r.ok) throw new Error('Error: ' + r.status); return r.text(); })
+  .then(function() {
+    document.getElementById('equipmentInfo').style.display = 'none';
+    document.getElementById('successMessage').style.display = 'block';
+    setText('confirmationCode', registroID);
+  })
+  .catch(function(e) {
+    btn.disabled = false;
+    btn.textContent = '✅ Confirmar cambio';
+    alert('Error al guardar.\n' + e.message);
+  });
+}
+</script>
+
+</body>
+</html>
